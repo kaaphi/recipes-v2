@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from aws_cdk import (
     Duration,
@@ -9,10 +10,12 @@ from constructs import Construct
 
 from infrastructure import Config
 
+STACK_ID = "RecipeStack"
+
 
 class RecipeStack(Stack):
     def __init__(self, scope: Construct, config: Config, **kwargs) -> None:
-        super().__init__(scope, "RecipeStack", **kwargs)
+        super().__init__(scope, STACK_ID, **kwargs)
 
         user_pool = cognito.UserPool(self, "RecipeUserPool",
                                      account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
@@ -36,13 +39,27 @@ class RecipeStack(Stack):
             auth_flows=cognito.AuthFlow(user=True, user_srp=True)
         )
 
-        user_pool_domain = user_pool.add_domain("RecipeDomain", cognito_domain=cognito.CognitoDomainOptions("recipes"), managed_login_version=cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN)
+        domain_prefix = f"kaaphi-recipes-{config.id.lower()}"
+
+        user_pool_domain = user_pool.add_domain("RecipeDomain", cognito_domain=cognito.CognitoDomainOptions(domain_prefix=domain_prefix), managed_login_version=cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN)
+
+        with open(Path(__file__).parent.joinpath("managed_login_settings.json"), 'rb') as f:
+            managed_login_settings = json.load(f)
+
+        managed_login_branding = cognito.CfnManagedLoginBranding(self, "RecipeBranding",
+                                                                 user_pool_id=user_pool.user_pool_id,
+                                                                 client_id=user_pool_client.user_pool_client_id,
+                                                                 assets=[],
+                                                                 settings=managed_login_settings,
+                                                                 return_merged_resources=False,
+                                                                 use_cognito_provided_values=False,
+                                                                 )
 
         oauth_details = {
             "user_pool_id": user_pool.user_pool_id,
             "authority": user_pool.user_pool_provider_url,
             "client_id": user_pool_client.user_pool_client_id,
-            "cloud_front_endpoint": user_pool_domain.cloud_front_endpoint,
+            "domain": f"{domain_prefix}.auth.{self.region}.amazoncognito.com",
         }
 
         CfnOutput(self, "OAuthDetails", value=json.dumps(oauth_details))
