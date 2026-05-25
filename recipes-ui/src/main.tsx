@@ -1,9 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-// import './index.css'
-import App from './App.tsx'
-import { AuthProvider } from 'react-oidc-context';
+import App, { Home, Login } from './App.tsx'
+import { AuthProvider, useAuth } from 'react-oidc-context';
 import type { User } from 'oidc-client-ts';
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { Title } from '@mantine/core';
 
 const cognitoAuthConfig = {
   authority: import.meta.env.VITE_OAUTH_AUTHORITY,
@@ -24,11 +25,53 @@ const cognitoAuthConfig = {
   }
 };
 
+const NotFound = () => {
+  return (
+    <Title>NOT FOUND!</Title>
+  )
+}
+
+type AuthWrapperProps = {
+  expectAuthenticated?: boolean,
+  children: React.ReactNode
+}
+
+const AuthWrapper = ({expectAuthenticated=true, children} : AuthWrapperProps) => {
+  const auth = useAuth();
+
+  if (auth.isLoading) {
+    return (<div>Loading...</div>);
+  }
+
+  if (auth.error) {
+    return (<div>Authentication error... {auth.error.message}</div>);
+  }
+
+  if (expectAuthenticated && !auth.isAuthenticated) {
+    return (<Navigate to="/login" replace />);
+  }
+
+  if (!expectAuthenticated && auth.isAuthenticated) {
+    return (<Navigate to="/" replace />);
+  }
+
+  return (children);
+}
+
 // wrap the application with AuthProvider
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider {...cognitoAuthConfig}>
-      <App />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<App />}>
+            <Route index element={<AuthWrapper><Home /></AuthWrapper>} />
+            <Route path="/oidc_callback/*" element={<AuthWrapper><Home /></AuthWrapper>} />
+            <Route path="/login" element={<AuthWrapper expectAuthenticated={false}><Login /></AuthWrapper>} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   </StrictMode>,
 )

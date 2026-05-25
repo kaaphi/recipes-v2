@@ -1,52 +1,32 @@
 // import './App.css'
-import { useAuth } from 'react-oidc-context'
+import { useAuth } from 'react-oidc-context';
 import '@mantine/core/styles.css';
-import { Button, MantineProvider, Title } from '@mantine/core';
+import { Center, Group, MantineProvider, Title } from '@mantine/core';
 import { AppShell, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { Outlet } from 'react-router';
+import { NavBar } from './Navbar';
+import { CookingPotIcon } from '@phosphor-icons/react';
 
-
-
-function App() {
+export const Home = () => {
   const auth = useAuth();
-   const [opened, { toggle }] = useDisclosure();
 
-  const signOutRedirect = () => {
-    const clientId = import.meta.env.VITE_OAUTH_CLIENT_ID;
-    const logoutUri = `${window.location.origin}/`;
-    const domain = import.meta.env.VITE_OAUTH_DOMAIN;
-    window.location.href = `https://${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
-  };
-
-  const AppInternal = () => {
-    if (auth.isLoading) {
-      return <div>Loading...</div>;
-    }
-
-    if (auth.error) {
-      return <div>Encountering error... {auth.error.message}</div>;
-    }
-
-    if (auth.isAuthenticated) {
-      return (
-        <div>
-          <pre> Hello: {auth.user?.profile.email} </pre>
-          <pre> ID Token: {auth.user?.id_token} </pre>
-          <pre> Access Token: {auth.user?.access_token} </pre>
-          <pre> Refresh Token: {auth.user?.refresh_token} </pre>
-
-          <Button onClick={() => auth.removeUser()}>Sign out</Button>
-        </div>
-      );
-    }
-
-    return (
-      <div>
-        <Button onClick={() => auth.signinRedirect()}>Sign in</Button>
-        <Button onClick={() => signOutRedirect()}>Sign out</Button>
-      </div>
+  return (
+    <Title order={3}>Hello {auth.user?.profile.email}!</Title>
   );
-  }
+}
+
+export const Login = () => {
+   return (
+    <Center>
+    <CookingPotIcon size={128} />
+    </Center>
+  );
+}
+
+
+export const App = () => {
+  const [opened, { toggle }] = useDisclosure();
 
   return (
     <MantineProvider>
@@ -60,19 +40,21 @@ function App() {
         }}
       >
         <AppShell.Header>
-          <Burger
-            opened={opened}
-            onClick={toggle}
-            hiddenFrom="sm"
-            size="sm"
-          />
+          <Group h="100%" px="md">
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="sm"
+            />
 
-          <Title order={1}>Recipes</Title>
+            <Title order={1}>Recipes</Title>
+          </Group>
         </AppShell.Header>
 
-        <AppShell.Navbar>Navbar</AppShell.Navbar>
+        <AppShell.Navbar><NavBar /></AppShell.Navbar>
 
-        <AppShell.Main><AppInternal /></AppShell.Main>
+        <AppShell.Main><Outlet /></AppShell.Main>
       </AppShell>
     </MantineProvider>
   );
