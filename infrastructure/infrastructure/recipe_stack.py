@@ -2,10 +2,11 @@ import json
 from pathlib import Path
 
 from aws_cdk import (
-    Duration,
     Stack,
-    aws_cognito as cognito, CfnOutput,
-    aws_dynamodb as dynamodb, RemovalPolicy,
+    aws_cognito as cognito,
+    CfnOutput,
+    aws_dynamodb as dynamodb,
+    RemovalPolicy,
     aws_iam as iam,
 )
 from constructs import Construct
@@ -31,10 +32,13 @@ class RecipeStack(Stack):
         policy.attach_to_user(user)
 
     def setup_dynamodb(self) -> dynamodb.Table:
-        removal_policy = RemovalPolicy.DESTROY if self.config.is_dev else RemovalPolicy.RETAIN
+        removal_policy = (
+            RemovalPolicy.DESTROY if self.config.is_dev else RemovalPolicy.RETAIN
+        )
 
         table = dynamodb.Table(
-            self, "Recipes",
+            self,
+            "Recipes",
             partition_key=dynamodb.Attribute(
                 name="pk",
                 type=dynamodb.AttributeType.STRING,
@@ -50,10 +54,14 @@ class RecipeStack(Stack):
         return table
 
     def setup_cognito(self):
-        user_pool = cognito.UserPool(self, "RecipeUserPool",
-                                     account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
-                                     email=cognito.UserPoolEmail.with_cognito(reply_to=self.config.cognito.reply_to_email)
-                                     )
+        user_pool = cognito.UserPool(
+            self,
+            "RecipeUserPool",
+            account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
+            email=cognito.UserPoolEmail.with_cognito(
+                reply_to=self.config.cognito.reply_to_email
+            ),
+        )
 
         call_back_urls = []
         if self.config.is_dev:
@@ -61,33 +69,41 @@ class RecipeStack(Stack):
         else:
             raise Exception("non-dev environments not supported yet!")
 
-        user_pool_client = user_pool.add_client("RecipeUiClient",
-                                                o_auth=cognito.OAuthSettings(
-                                                    flows=cognito.OAuthFlows(
-                                                        authorization_code_grant=True,
-                                                    ),
-                                                    scopes=[cognito.OAuthScope.OPENID],
-                                                    callback_urls=call_back_urls,
-                                                ),
-                                                auth_flows=cognito.AuthFlow(user=True, user_srp=True)
-                                                )
+        user_pool_client = user_pool.add_client(
+            "RecipeUiClient",
+            o_auth=cognito.OAuthSettings(
+                flows=cognito.OAuthFlows(
+                    authorization_code_grant=True,
+                ),
+                scopes=[cognito.OAuthScope.OPENID],
+                callback_urls=call_back_urls,
+            ),
+            auth_flows=cognito.AuthFlow(user=True, user_srp=True),
+        )
 
         domain_prefix = f"kaaphi-recipes-{self.config.id.lower()}"
 
-        user_pool_domain = user_pool.add_domain("RecipeDomain", cognito_domain=cognito.CognitoDomainOptions(
-            domain_prefix=domain_prefix), managed_login_version=cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN)
+        user_pool.add_domain(
+            "RecipeDomain",
+            cognito_domain=cognito.CognitoDomainOptions(domain_prefix=domain_prefix),
+            managed_login_version=cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN,
+        )
 
-        with open(Path(__file__).parent.joinpath("managed_login_settings.json"), 'rb') as f:
+        with open(
+            Path(__file__).parent.joinpath("managed_login_settings.json"), "rb"
+        ) as f:
             managed_login_settings = json.load(f)
 
-        managed_login_branding = cognito.CfnManagedLoginBranding(self, "RecipeBranding",
-                                                                 user_pool_id=user_pool.user_pool_id,
-                                                                 client_id=user_pool_client.user_pool_client_id,
-                                                                 assets=[],
-                                                                 settings=managed_login_settings,
-                                                                 return_merged_resources=False,
-                                                                 use_cognito_provided_values=False,
-                                                                 )
+        cognito.CfnManagedLoginBranding(
+            self,
+            "RecipeBranding",
+            user_pool_id=user_pool.user_pool_id,
+            client_id=user_pool_client.user_pool_client_id,
+            assets=[],
+            settings=managed_login_settings,
+            return_merged_resources=False,
+            use_cognito_provided_values=False,
+        )
 
         oauth_details = {
             "user_pool_id": user_pool.user_pool_id,

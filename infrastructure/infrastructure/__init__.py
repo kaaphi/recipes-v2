@@ -1,7 +1,9 @@
 from pydantic import BaseModel
 
+
 class CognitoSettings(BaseModel):
     reply_to_email: str
+
 
 class Config(BaseModel):
     id: str
@@ -10,4 +12,3 @@ class Config(BaseModel):
     is_dev: bool = False
 
     cognito: CognitoSettings
-
