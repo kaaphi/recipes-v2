@@ -54,6 +54,21 @@ class RecipeStack(Stack):
         return table
 
     def setup_cognito(self):
+        callback_urls = []
+        logout_urls = []
+        if self.config.is_dev:
+            callback_urls.append("http://localhost:5173/oidc_callback")
+            logout_urls.append("http://localhost:5173/")
+            password_policy = cognito.PasswordPolicy(
+                min_length=8,
+                require_digits=False,
+                require_lowercase=False,
+                require_symbols=False,
+                require_uppercase=False,
+            )
+        else:
+            raise Exception("non-dev environments not supported yet!")
+
         user_pool = cognito.UserPool(
             self,
             "RecipeUserPool",
@@ -61,13 +76,8 @@ class RecipeStack(Stack):
             email=cognito.UserPoolEmail.with_cognito(
                 reply_to=self.config.cognito.reply_to_email
             ),
+            password_policy=password_policy,
         )
-
-        call_back_urls = []
-        if self.config.is_dev:
-            call_back_urls.append("http://localhost:5173/oidc_callback")
-        else:
-            raise Exception("non-dev environments not supported yet!")
 
         user_pool_client = user_pool.add_client(
             "RecipeUiClient",
@@ -76,7 +86,8 @@ class RecipeStack(Stack):
                     authorization_code_grant=True,
                 ),
                 scopes=[cognito.OAuthScope.OPENID],
-                callback_urls=call_back_urls,
+                callback_urls=callback_urls,
+                logout_urls=logout_urls,
             ),
             auth_flows=cognito.AuthFlow(user=True, user_srp=True),
         )
