@@ -2,6 +2,39 @@ opencollection: 1.0.0
 
 info:
   name: Recipes V2
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: oauth2
+    flow: authorization_code
+    authorizationUrl: "{{oauth_host}}/login"
+    accessTokenUrl: "{{oauth_host}}/oauth2/token"
+    refreshTokenUrl: "{{oauth_host}}/oauth2/token"
+    callbackUrl: "{{oauth_redirect_url}}"
+    credentials:
+      clientId: "{{oauth_clientid}}"
+      placement: body
+    scope: openid
+    pkce: {}
+    tokenConfig:
+      id: credentials
+      placement:
+        header: Bearer
+      source: access_token
+    settings:
+      autoFetchToken: true
+      autoRefreshToken: false
 bundled: false
 extensions:
   bruno:

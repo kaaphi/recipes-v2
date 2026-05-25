@@ -8,7 +8,7 @@ http:
   url: "{{host}}/user/recipes/:user_id"
   params:
     - name: user_id
-      value: ""
+      value: "1234"
       type: path
   auth: inherit
 

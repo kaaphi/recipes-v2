@@ -1,21 +1,23 @@
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from fastapi_cognito import CognitoAuth, CognitoToken
 
 from schemas.api_models import UserRecipes
-from schemas.config import load_config
+from schemas.config import load_config, RecipesConfig
 from services import RecipeService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-config = load_config()
+config: RecipesConfig = load_config()
 service = RecipeService(config)
 
 
 app: FastAPI = FastAPI()
 
+cognito: CognitoAuth = CognitoAuth(settings=config.cognito_auth)
 
 @app.get("/user/recipes/{user_id}")
-def get_recipes(user_id: str) -> UserRecipes:
+def get_recipes(user_id: str, auth: CognitoToken = Depends(cognito.auth_required)) -> UserRecipes:
     return service.query_user(user_id)

@@ -68,7 +68,7 @@ def dynamo_db_item_discriminator(v):
     match sk:
         case "#m":
             return "User"
-        case str() if sk.startswith("#r") or sk.startswith("#zr"):
+        case str() if sk.startswith("r#") or sk.startswith("zr#"):
             return "Recipe"
         case _:
             raise Exception(f"Invalid sk: {sk}")
