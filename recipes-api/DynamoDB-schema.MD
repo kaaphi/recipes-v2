@@ -8,12 +8,12 @@
 - Sort Key Values:
   - Meta record
     - Contains all the details of the user
-    - Value: `Meta`
+    - Value: `#m`
   - Recipe record
     - Contains deeply nested data structure with all the attributes of the recipe
     - Values:
       - `r#<id>` for active recipies
-      - `ar#<id>` for archived recipes
+      - `zr#<id>` for archived recipes
         - Since the sort key value cannot be changed, archiving a record means adding a new record and deleting the old record
 
 ## Current v1 State in Postgres
