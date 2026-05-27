@@ -5,6 +5,7 @@ from fastapi_cognito import CognitoAuth, CognitoToken
 
 from schemas.api_models import UserRecipes
 from schemas.config import load_config, RecipesConfig
+from schemas.dynamodb_models import Recipe
 from services import RecipeService
 
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +19,12 @@ app: FastAPI = FastAPI()
 
 cognito: CognitoAuth = CognitoAuth(settings=config.cognito_auth)
 
-@app.get("/user/recipes/{user_id}")
-def get_recipes(user_id: str, auth: CognitoToken = Depends(cognito.auth_required)) -> UserRecipes:
-    return service.query_user(user_id)
+
+@app.get("/user/recipes")
+def get_recipes(auth: CognitoToken = Depends(cognito.auth_required)) -> UserRecipes:
+    return service.query_user(auth.cognito_id)
+
+
+@app.get("/recipe/{recipe_id}")
+def get_recipe(recipe_id: str) -> Recipe:
+    return service.read_recipe(recipe_id)

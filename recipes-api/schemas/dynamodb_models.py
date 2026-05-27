@@ -25,6 +25,7 @@ class BaseRecipes(BaseModel):
 
 class User(BaseRecipes):
     display_name: str
+    sk: str = "#m"
 
     @property
     def id(self) -> str:
@@ -42,7 +43,11 @@ class Recipe(BaseRecipes):
     @computed_field
     @property
     def is_archived(self) -> bool:
-        return self.pk.startswith("zr#")
+        return self.sk.startswith("zr#")
+
+    @property
+    def id(self) -> str:
+        return self.sk.split("#")[1]
 
     @field_serializer("created_at", "updated_at", mode="wrap")
     def ser_datetime(self, value: datetime, handler: Any, info: FieldSerializationInfo):

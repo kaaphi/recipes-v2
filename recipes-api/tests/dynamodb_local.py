@@ -1,9 +1,11 @@
 import logging
+from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
+from pydantic import TypeAdapter
 
-from schemas.dynamodb_models import Recipe, IngredientList, User
+from schemas.dynamodb_models import DynamoDbItem
 from services import RecipeService
 
 DEFAULT_TABLE_NAME = "Recipes"
@@ -42,6 +44,7 @@ class DynamoDBLocal:
             logger.info(f"Table {self.table_name} already exists.")
             pass
         else:
+            logger.info(f"Table {self.table_name} does not exist. Will create it.")
             table = self.dynamodb_resource.create_table(
                 TableName=self.table_name,
                 KeySchema=[
@@ -70,19 +73,29 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     db = DynamoDBLocal()
     db.create_table()
-    service = RecipeService(db.table)
-    service.save_item(
-        Recipe(
-            pk="u#1234",
-            sk="r#1234",
-            title="My Recipe",
-            method="My Method",
-            ingredientLists=[
-                IngredientList(ingredients=["one", "two", "three"]),
-                IngredientList(name="other", ingredients=["one", "two", "three"]),
-            ],
-        )
-    )
-    service.save_item(User(pk="u#1234", sk="#m", display_name="Bob"))
+    service = RecipeService(table=db.table)
 
-    print(service.query_user("1234"))
+    with open(
+        Path(__file__).parent.parent.joinpath("test-data", "recipes_v2.json"),
+        "rb",
+    ) as f:
+        adapter = TypeAdapter(list[DynamoDbItem])
+        recipes = adapter.validate_json(f.read())
+        service.save_items(recipes)
+
+    #
+    # service.save_item(
+    #     Recipe(
+    #         pk="u#1234",
+    #         sk="r#1234",
+    #         title="My Recipe",
+    #         method="My Method",
+    #         ingredientLists=[
+    #             IngredientList(ingredients=["one", "two", "three"]),
+    #             IngredientList(name="other", ingredients=["one", "two", "three"]),
+    #         ],
+    #     )
+    # )
+    # service.save_item(User(pk="u#1234", sk="#m", display_name="Bob"))
+
+    print(service.query_user("28d123d0-5071-706f-8316-9c8d66e043c3"))
