@@ -1,20 +1,13 @@
 // import './App.css'
-import { useAuth } from 'react-oidc-context';
 import '@mantine/core/styles.css';
 import { Center, Group, MantineProvider, Title } from '@mantine/core';
 import { AppShell, Burger } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { Outlet } from 'react-router';
+import { useDisclosure, useScrollIntoView } from '@mantine/hooks';
+import { Outlet, useOutletContext } from 'react-router';
 import { NavBar } from './Navbar';
 import { CookingPotIcon } from '@phosphor-icons/react';
+import type React from 'react';
 
-export const Home = () => {
-  const auth = useAuth();
-
-  return (
-    <Title order={3}>Hello {auth.user?.profile.email}!</Title>
-  );
-}
 
 export const Login = () => {
    return (
@@ -24,6 +17,18 @@ export const Login = () => {
   );
 }
 
+const headerHeight = 60
+
+export const scrollToElement = (elementId: string) => {
+  //   document.getElementById(`letter_${letter}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  const element = document.getElementById(elementId)
+  const elementRect = element!.getBoundingClientRect();
+  const absoluteElementTop = elementRect.top + window.scrollY;
+  window.scrollTo({
+    top: absoluteElementTop - headerHeight,
+    behavior: 'smooth'
+  });
+};   
 
 export const App = () => {
   const [opened, { toggle }] = useDisclosure();
@@ -32,7 +37,7 @@ export const App = () => {
     <MantineProvider>
       <AppShell
         padding="md"
-        header={{ height: 60 }}
+        header={{ height: headerHeight }}
         navbar={{
           width: 300,
           breakpoint: 'sm',

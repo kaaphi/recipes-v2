@@ -1,10 +1,12 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App, { Home, Login } from './App.tsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App, { Login } from './App.tsx';
 import { AuthProvider, useAuth } from 'react-oidc-context';
 import type { User } from 'oidc-client-ts';
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { Title } from '@mantine/core';
+import { AllRecipes } from './AllRecipes.tsx';
+import { Recipe } from './Recipe.tsx';
 
 const cognitoAuthConfig = {
   authority: import.meta.env.VITE_OAUTH_AUTHORITY,
@@ -65,8 +67,9 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<App />}>
-            <Route index element={<AuthWrapper><Home /></AuthWrapper>} />
-            <Route path="/oidc_callback/*" element={<AuthWrapper><Home /></AuthWrapper>} />
+            <Route index element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
+            <Route path="/oidc_callback/*" element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
+            <Route path="/recipe/:recipeId" element={<AuthWrapper><Recipe /></AuthWrapper>} />
             <Route path="/login" element={<AuthWrapper expectAuthenticated={false}><Login /></AuthWrapper>} />
             <Route path="*" element={<NotFound />} />
           </Route>
