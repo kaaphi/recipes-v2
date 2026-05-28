@@ -46,7 +46,7 @@ class RecipeService:
             self._query_user.cache.pop(key, None)
 
     def _cache_recipe(self, recipe: Recipe) -> None:
-        key = self.read_recipe.cache_key(recipe.id)
+        key = self.read_recipe.cache_key(recipe.recipe_id)
         with self.read_recipe.cache_lock:
             self.read_recipe.cache[key] = recipe
 
@@ -84,24 +84,27 @@ class RecipeService:
 
     @cachedmethod(lambda self: self._recipe_cache, lock=lambda self: self._recipe_lock)
     def read_recipe(self, recipe_id) -> Recipe | None:
-        # TODO right now, we're assuming they always get cached from querying the user, will need to add GSI or change
-        # schema to improve this
         logger.info(f"Reading recipe for recipe id {recipe_id}")
-        response = self.table.scan(
-            FilterExpression=Key("sk").eq(f"r#{recipe_id}")
-            or Key("sk").eq(f"zr#{recipe_id}")
+        response = self.table.query(
+            IndexName="RecipeId",
+            KeyConditionExpression=Key("recipe_id").eq(recipe_id)
         )
         items = response.get("Items", [])
         if len(items) == 0:
             return None
+
+        response = self.table.get_item(Key={"pk":items[0]["pk"], "sk":items[0]["sk"]})
+
+        if "Item" in response:
+            return Recipe.model_validate(response["Item"])
         else:
-            return Recipe.model_validate(items[0])
+            return None
 
     def query_user(self, user_id: str) -> UserRecipes | None:
         user: User
         recipes_raw: list[Recipe]
         user, recipes_raw = self._query_user(user_id)
-        recipes = [RecipeStub(title=r.title, id=r.id) for r in recipes_raw]
+        recipes = [RecipeStub(title=r.title, id=r.recipe_id) for r in recipes_raw]
         recipes.sort(key=lambda r: r.title)
 
         return UserRecipes(user=user, recipes=recipes)

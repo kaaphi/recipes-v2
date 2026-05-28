@@ -60,6 +60,18 @@ class DynamoDBLocal:
                 AttributeDefinitions=[
                     {"AttributeName": "pk", "AttributeType": "S"},
                     {"AttributeName": "sk", "AttributeType": "S"},
+                    {"AttributeName": "recipe_id", "AttributeType": "S"},
+                ],
+                GlobalSecondaryIndexes=[
+                    {
+                        "IndexName": "RecipeId",
+                        "KeySchema": [
+                            {"AttributeName": "recipe_id", "KeyType": "HASH"},
+                        ],
+                        "Projection": {
+                            "ProjectionType": "KEYS_ONLY",
+                        },
+                    }
                 ],
                 BillingMode="PAY_PER_REQUEST",
             )

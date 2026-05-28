@@ -51,6 +51,14 @@ class RecipeStack(Stack):
             removal_policy=removal_policy,
         )
 
+        table.add_global_secondary_index(
+            index_name="RecipesIndex",
+            partition_key=dynamodb.Attribute(
+                name="recipe_id",
+                type=dynamodb.AttributeType.STRING,
+            ),
+        )
+
         return table
 
     def setup_cognito(self):
