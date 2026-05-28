@@ -1,5 +1,6 @@
 // import './App.css'
-import '@mantine/core/styles.css';
+// import '@mantine/core/styles.css';
+
 import { Center, Group, MantineProvider, Title } from '@mantine/core';
 import { AppShell, Burger } from '@mantine/core';
 import { useDisclosure, useScrollIntoView } from '@mantine/hooks';

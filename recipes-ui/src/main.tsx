@@ -1,3 +1,5 @@
+import '@mantine/core/styles.css';
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App, { Login } from './App.tsx';
@@ -7,6 +9,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { Title } from '@mantine/core';
 import { AllRecipes } from './AllRecipes.tsx';
 import { Recipe } from './Recipe.tsx';
+
 
 const cognitoAuthConfig = {
   authority: import.meta.env.VITE_OAUTH_AUTHORITY,

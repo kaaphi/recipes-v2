@@ -1,7 +1,8 @@
-import { Button, Group, Stack, Title } from "@mantine/core";
+import { Anchor, Button, Divider, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
 import { useFetch, useScrollIntoView } from "@mantine/hooks";
 import { useAuth } from "react-oidc-context";
 import { scrollToElement } from "./App";
+import { Link } from "react-router";
 
 interface RecipeStub {
     title: string,
@@ -32,27 +33,40 @@ export const AllRecipes = () => {
 
     const grouped = data?.recipes.reduce((acc, r) => {
         const key = r.title.charAt(0).toUpperCase();
-        (acc[key] = acc[key] || []).push(r.title);
+        (acc[key] = acc[key] || []).push(r);
         return acc;
-    }, {} as Record<string, string[]>) || {};
+    }, {} as Record<string, RecipeStub[]>) || {};
 
 
     return (
         <>
-            <Title order={2}>Recipes for {data?.user.display_name}!</Title>
+            <LoadingOverlay visible={loading || !data} />
+            <Stack>
+            <Title id="title_top" order={1}>Recipes for {data?.user.display_name}</Title>
             <div>
             <Group>
-                {Object.keys(grouped).map((letter) => <Button component="a" onClick={() => scrollToLetter(letter)} key={letter} variant="outline" size="xs">{letter}</Button>)}
+                {Object.keys(grouped).map((letter) => <Button onClick={() => scrollToLetter(letter)} key={letter} variant="outline" size="xs">{letter}</Button>)}
             </Group>
-            {Object.entries(grouped).map(([key, titles]) =>
+            </div>
+            <Stack>
+            {Object.entries(grouped).map(([key, recipes]) =>
                 <div key={key}>
-                    <Title id={"letter_" + key}>{key}</Title>
-                    <Stack>
-                        {titles.map((title) => <span key={title}>{title}</span>)}
-                    </Stack>
+                    <Title order={2} style={{ cursor: 'pointer' }} onClick={() => scrollToElement("title_top")} id={"letter_" + key}>{key}</Title>
+                    <Table highlightOnHover verticalSpacing="sm">                        
+                        <Table.Tbody>
+                        {recipes.map((recipe) => 
+                        <Table.Tr key={recipe.id}>
+                            <Table.Td p={0}>
+                                <Anchor p="xs" display="block" component={Link} to={`/recipe/${recipe.id}`}>{recipe.title}</Anchor>
+                            </Table.Td>
+                        </Table.Tr>
+                        )}
+                    </Table.Tbody>
+                    </Table>
                 </div>
             )}
-            </div>
+            </Stack>
+            </Stack>
         </>
     );
 }
