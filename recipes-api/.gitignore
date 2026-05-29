@@ -5,3 +5,4 @@ __pycache__/
 docker
 
 build
+*.egg-info

@@ -86,14 +86,13 @@ class RecipeService:
     def read_recipe(self, recipe_id) -> Recipe | None:
         logger.info(f"Reading recipe for recipe id {recipe_id}")
         response = self.table.query(
-            IndexName="RecipeId",
-            KeyConditionExpression=Key("recipe_id").eq(recipe_id)
+            IndexName="RecipeId", KeyConditionExpression=Key("recipe_id").eq(recipe_id)
         )
         items = response.get("Items", [])
         if len(items) == 0:
             return None
 
-        response = self.table.get_item(Key={"pk":items[0]["pk"], "sk":items[0]["sk"]})
+        response = self.table.get_item(Key={"pk": items[0]["pk"], "sk": items[0]["sk"]})
 
         if "Item" in response:
             return Recipe.model_validate(response["Item"])
