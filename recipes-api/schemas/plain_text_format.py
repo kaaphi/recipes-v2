@@ -20,11 +20,10 @@ class PlainTextParser:
         self._lines_iter = iter(str.splitlines(text))
         self._advance()
 
-    def _advance(self) -> str|None:
+    def _advance(self) -> str | None:
         self._next_line = next(self._lines_iter, None)
         if self._next_line is not None:
             self._next_line = self._next_line.strip()
-
 
     def _peek_next(self, skip_empty_lines=False):
         while skip_empty_lines and self._next_line == "":
@@ -86,11 +85,11 @@ class PlainTextParser:
             is_default = False
 
 
-def parse_plain_text(text: str) -> PlainTextRecipe:
+def from_plain_text(text: str) -> PlainTextRecipe:
     return PlainTextParser(text).parse()
 
 
-def to_plain_text(recipe: PlainTextRecipe|Recipe) -> str:
+def to_plain_text(recipe: PlainTextRecipe | Recipe) -> str:
     out = [recipe.title]
     for ingredient_list in recipe.ingredientLists:
         out.append("")

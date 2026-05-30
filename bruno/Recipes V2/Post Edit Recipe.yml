@@ -1,0 +1,52 @@
+info:
+  name: Post Edit Recipe
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{host}}/recipe/edit/:id"
+  params:
+    - name: id
+      value: 00fc4091-45e8-4eb9-8c04-c401a14c8110
+      type: path
+  body:
+    type: text
+    data: |-
+      Lasagna CHANGED
+
+      Meat sauce
+      Lasagna noodles
+      Ricotta
+      Mozzarella
+      Parmesan
+      Spinach
+
+      Meat Sauce::
+      Carrots
+      Celery
+      Snoino
+      Garlic
+      Tomatoes
+      Meat (beef, pork, and/or lamb)
+
+      1. Make meat sauce
+      1. Heat oven to 400°F
+      1. Cook noodles
+      3. Wilt spinach and combine with ricotta and a bit of meat sauce
+      2. Smear pan with butter or oil
+      3. Put in a layer of noodles
+      4. Over first three layers, spread ricotta, then meat sauce, then mozzarella, then parmesan; perhaps a bit of salt and pepper
+      5. No ricotta on top layer
+      6. Bake for 20-30 minutes, until bubbly
+      7. Let rest for 5 minutes before serving
+
+      SOURCES
+      Mark Bittman
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

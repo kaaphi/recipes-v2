@@ -1,20 +1,13 @@
 from datetime import datetime
-from typing import Any, Annotated, Union
+from typing import Annotated, Union
 
-from pydantic import BaseModel, field_serializer, Tag, Discriminator, computed_field
-from pydantic_core.core_schema import FieldSerializationInfo
-
-DYNAMODB_MODE = "dynamo_db_mode"
+from pydantic import BaseModel, Tag, Discriminator, computed_field, field_validator
 
 
-def dynamodb_mode_context(**kwargs) -> dict:
-    return kwargs | {DYNAMODB_MODE: True}
-
-
-def dynamodb_dump_args() -> dict:
+def dynamodb_dump_args(additional_exclude: set[str] = set()) -> dict:
     return {
-        "exclude": {"is_archived"},
-        "context": dynamodb_mode_context(),
+        "mode": "json",
+        "exclude": {"is_archived"} | additional_exclude,
     }
 
 
@@ -22,23 +15,65 @@ class BaseRecipes(BaseModel):
     pk: str
     sk: str
 
+    @property
+    def user_id(self) -> str:
+        return self.pk.split("#")[1]
+
+    @field_validator("pk", mode="after")
+    @classmethod
+    def validate_pk(cls, pk: str) -> str:
+        if "#" not in pk:
+            return f"u#{pk}"
+
+        if not pk.startswith("u#"):
+            raise ValueError(f'pk must start with "u#": "{pk}"!')
+
+        return pk
+
+    def dump_key(self):
+        return self.model_dump(include=BaseRecipes.model_fields.keys())
+
+    def dump_for_dynamodb(self, additional_exclude: set[str] = set()) -> dict:
+        return self.model_dump(**dynamodb_dump_args(additional_exclude))
+
 
 class User(BaseRecipes):
     display_name: str
     sk: str = "#m"
 
-    @property
-    def user_id(self) -> str:
-        return self.pk.split("#")[1]
+    @field_validator("sk", mode="after")
+    @classmethod
+    def validate_sk(cls, sk: str) -> str:
+        if sk != "#m":
+            raise ValueError(f'User sk must be "#m": "{sk}"!')
+        return sk
 
 
-class Recipe(BaseRecipes):
+class EditableRecipe(BaseRecipes):
     title: str
     method: str
     sources: list[str] = []
     ingredientLists: list[IngredientList] = []
-    created_at: datetime = datetime.now()
     updated_at: datetime = datetime.now()
+
+    @field_validator("sk", mode="after")
+    @classmethod
+    def validate_sk(cls, sk: str) -> str:
+        if "#" not in sk:
+            return f"r#{sk}"
+
+        if not (sk.startswith("r#") or sk.startswith("zr#")):
+            raise ValueError('Recipe sk must start with "r#" or "zr#"!')
+        return sk
+
+    def dump_for_dynamodb_update(self, additional_exclude: set[str] = set()) -> dict:
+        return super().dump_for_dynamodb(
+            additional_exclude=additional_exclude | {"pk", "sk"}
+        )
+
+
+class Recipe(EditableRecipe):
+    created_at: datetime = datetime.now()
 
     @computed_field
     @property
@@ -49,13 +84,6 @@ class Recipe(BaseRecipes):
     @property
     def recipe_id(self) -> str:
         return self.sk.split("#")[1]
-
-    @field_serializer("created_at", "updated_at", mode="wrap")
-    def ser_datetime(self, value: datetime, handler: Any, info: FieldSerializationInfo):
-        dynamo_db_mode = (
-            info.context.get(DYNAMODB_MODE, False) if info.context else False
-        )
-        return value.isoformat() if dynamo_db_mode else handler(value)
 
 
 class IngredientList(BaseModel):

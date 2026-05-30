@@ -1,0 +1,19 @@
+info:
+  name: Put Edit Recipe
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{host}}/recipe/edit/:id"
+  params:
+    - name: id
+      value: 00fc4091-45e8-4eb9-8c04-c401a14c8110
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
