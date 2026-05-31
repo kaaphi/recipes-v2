@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, Response, HTTPException, status
 from fastapi.params import Body
 from fastapi_cognito import CognitoAuth, CognitoToken
 
-from schemas.api_models import UserRecipes
+from schemas.api_models import UserRecipes, PlainTextWrapper
 from schemas.config import load_config, RecipesConfig
 from schemas.dynamodb_models import Recipe
 from schemas.plain_text_format import to_plain_text, from_plain_text
@@ -57,26 +57,24 @@ def get_recipe(
 @app.get("/recipe/edit/{recipe_id}")
 def get_edit_recipe(
     recipe_id: str, scoped_service: ScopedRecipeService = Depends(scoped_recipe_service)
-) -> PlainTextRecipeResponse:
-    return PlainTextRecipeResponse(
-        content=to_plain_text(scoped_service.read_recipe(recipe_id))
-    )
+) -> PlainTextWrapper:
+    return PlainTextWrapper(recipe = to_plain_text(scoped_service.read_recipe(recipe_id)))
 
 
 @app.post("/recipe/edit")
 def post_edit_recipe(
-    recipe_text: str = Body(media_type="text/plain"),
+    recipe_text: PlainTextWrapper,
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
 ) -> Recipe:
-    plain_text_recipe = from_plain_text(recipe_text)
+    plain_text_recipe = from_plain_text(recipe_text.recipe)
     return scoped_service.create_recipe(plain_text_recipe)
 
 
 @app.put("/recipe/edit/{recipe_id}")
 def put_edit_recipe(
     recipe_id: str,
-    recipe_text: str = Body(media_type="text/plain"),
+    recipe_text: PlainTextWrapper,
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
 ) -> None:
-    plain_text_recipe = from_plain_text(recipe_text)
+    plain_text_recipe = from_plain_text(recipe_text.recipe)
     scoped_service.edit_recipe(recipe_id, plain_text_recipe)

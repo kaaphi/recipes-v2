@@ -3,11 +3,10 @@
 
 import { Center, Group, MantineProvider, Title } from '@mantine/core';
 import { AppShell, Burger } from '@mantine/core';
-import { useDisclosure, useScrollIntoView } from '@mantine/hooks';
-import { Outlet, useOutletContext } from 'react-router';
+import { useDisclosure } from '@mantine/hooks';
+import { Outlet } from 'react-router';
 import { NavBar } from './Navbar';
 import { CookingPotIcon } from '@phosphor-icons/react';
-import type React from 'react';
 
 
 export const Login = () => {
@@ -18,7 +17,7 @@ export const Login = () => {
   );
 }
 
-const headerHeight = 60
+export const headerHeight = 60
 
 export const scrollToElement = (elementId: string) => {
   //   document.getElementById(`letter_${letter}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })

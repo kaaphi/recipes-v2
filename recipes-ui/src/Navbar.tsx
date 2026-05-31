@@ -1,7 +1,7 @@
 import { NavLink, Stack, type NavLinkProps } from "@mantine/core";
-import { HouseIcon, PlusIcon, SignInIcon, SignOutIcon } from "@phosphor-icons/react";
+import { HouseIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon } from "@phosphor-icons/react";
 import { useAuth } from "react-oidc-context";
-import { NavLink as RouterNavLink } from 'react-router';
+import { NavLink as RouterNavLink, useParams } from 'react-router';
 
 
 type NavBarProps = {
@@ -50,6 +50,7 @@ const NavItem = (props: NavBarProps) => {
 
 export const NavBar = () => {
   const auth = useAuth();
+  const { recipeId } = useParams();
 
   const signOutRedirect = () => {
     auth.removeUser();
@@ -62,6 +63,7 @@ export const NavBar = () => {
   return (<Stack>
     <NavItem label="Home" leftSection={<HouseIcon size={16} />} link={auth.isAuthenticated ? "/" : "/login"} authCondition="always" />
     <NavItem label="New Recipe" leftSection={<PlusIcon size={16} />} link="/new" />
+    <NavItem label="Edit Recipe" leftSection={<PencilSimpleIcon size={16} />} link={`/recipe/${recipeId}/edit`} disabled={!recipeId} />
     <NavItem label="Sign in" leftSection={<SignInIcon size={16} />} onClick={() => auth.signinRedirect()} authCondition="requireNoAuth" />
     <NavItem label="Sign out" leftSection={<SignOutIcon size={16} />} onClick={() => signOutRedirect()} />
 

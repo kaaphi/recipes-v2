@@ -4,16 +4,12 @@ info:
   seq: 5
 
 http:
-  method: PUT
-  url: "{{host}}/recipe/edit/:id"
-  params:
-    - name: id
-      value: 00fc4091-45e8-4eb9-8c04-c401a14c8110
-      type: path
+  method: POST
+  url: "{{host}}/recipe/edit"
   body:
     type: text
     data: |-
-      Lasagna CHANGED
+      Lasagna New
 
       Meat sauce
       Lasagna noodles
@@ -44,6 +40,13 @@ http:
       SOURCES
       Mark Bittman
   auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setBody({"recipe": req.body})
+        req.setHeader("Content-Type", "application/json")
 
 settings:
   encodeUrl: true

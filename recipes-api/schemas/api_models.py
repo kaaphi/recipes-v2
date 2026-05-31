@@ -12,6 +12,8 @@ class UserRecipes(BaseModel):
     user: User
     recipes: list[RecipeStub]
 
+class PlainTextWrapper(BaseModel):
+    recipe: str
 
 class PlainTextRecipe(BaseModel):
     title: str

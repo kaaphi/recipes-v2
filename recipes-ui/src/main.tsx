@@ -9,6 +9,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { Title } from '@mantine/core';
 import { AllRecipes } from './AllRecipes.tsx';
 import { Recipe } from './Recipe.tsx';
+import { CreateRecipe, EditRecipe } from './EditRecipe.tsx';
 
 
 const cognitoAuthConfig = {
@@ -73,6 +74,8 @@ createRoot(document.getElementById('root')!).render(
             <Route index element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
             <Route path="/oidc_callback/*" element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
             <Route path="/recipe/:recipeId" element={<AuthWrapper><Recipe /></AuthWrapper>} />
+            <Route path="/recipe/:recipeId/edit" element={<AuthWrapper><EditRecipe /></AuthWrapper>} />
+            <Route path="/new" element={<AuthWrapper><CreateRecipe /></AuthWrapper>} />
             <Route path="/login" element={<AuthWrapper expectAuthenticated={false}><Login /></AuthWrapper>} />
             <Route path="*" element={<NotFound />} />
           </Route>
