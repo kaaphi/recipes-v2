@@ -8,9 +8,9 @@ from cachetools import TTLCache, cachedmethod
 from pydantic import TypeAdapter
 from ulid import ULID
 
-from schemas.api_models import UserRecipes, RecipeStub, PlainTextRecipe
-from schemas.config import RecipesConfig
-from schemas.dynamodb_models import (
+from app.schemas.api_models import UserRecipes, RecipeStub, PlainTextRecipe
+from app.schemas.config import RecipesConfig
+from app.schemas.dynamodb_models import (
     Recipe as Recipe,
     BaseRecipes,
     DynamoDbItem,

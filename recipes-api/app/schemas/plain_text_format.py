@@ -1,8 +1,8 @@
 from collections.abc import Generator
 from typing import Callable
 
-from schemas.api_models import PlainTextRecipe
-from schemas.dynamodb_models import IngredientList, Recipe
+from app.schemas.api_models import PlainTextRecipe
+from app.schemas.dynamodb_models import IngredientList, Recipe
 
 SOURCES_TAG = "SOURCES"
 

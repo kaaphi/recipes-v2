@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from schemas.dynamodb_models import User, IngredientList, EditableRecipe, Recipe
+from app.schemas.dynamodb_models import User, IngredientList, EditableRecipe, Recipe
 
 
 class RecipeStub(BaseModel):
@@ -12,8 +12,10 @@ class UserRecipes(BaseModel):
     user: User
     recipes: list[RecipeStub]
 
+
 class PlainTextWrapper(BaseModel):
     recipe: str
+
 
 class PlainTextRecipe(BaseModel):
     title: str

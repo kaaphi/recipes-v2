@@ -1,5 +1,5 @@
-import { Anchor, Button, Divider, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
-import { useFetch, useScrollIntoView } from "@mantine/hooks";
+import { Anchor, Button, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
+import { useFetch } from "@mantine/hooks";
 import { useAuth } from "react-oidc-context";
 import { scrollToElement } from "./App";
 import { Link } from "react-router";
@@ -18,7 +18,7 @@ interface UserRecipes {
 
 export const AllRecipes = () => {
     const auth = useAuth();
-    const { data, loading, error, refetch, abort } = useFetch<UserRecipes>(
+    const { data, loading, error } = useFetch<UserRecipes>(
         "/api/user/recipes",
         {
             headers: {

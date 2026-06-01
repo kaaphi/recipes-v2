@@ -31,7 +31,7 @@ const Ingredients = ({list} : {list: IngredientList}) => {
 export const Recipe = () => {
     const auth = useAuth();
     const { recipeId } = useParams();
-    const { data, loading, error, refetch, abort } = useFetch<Recipe>(
+    const { data, loading, error } = useFetch<Recipe>(
         `/api/recipe/${recipeId}`,
         {
             headers: {

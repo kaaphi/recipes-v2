@@ -1,14 +1,13 @@
 import logging
 
 from fastapi import FastAPI, Depends, Response, HTTPException, status
-from fastapi.params import Body
 from fastapi_cognito import CognitoAuth, CognitoToken
 
-from schemas.api_models import UserRecipes, PlainTextWrapper
-from schemas.config import load_config, RecipesConfig
-from schemas.dynamodb_models import Recipe
-from schemas.plain_text_format import to_plain_text, from_plain_text
-from services import RecipeService, ScopedRecipeService
+from app.schemas.api_models import UserRecipes, PlainTextWrapper
+from app.schemas.config import load_config, RecipesConfig
+from app.schemas.dynamodb_models import Recipe
+from app.schemas.plain_text_format import to_plain_text, from_plain_text
+from app.services import RecipeService, ScopedRecipeService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,7 +57,7 @@ def get_recipe(
 def get_edit_recipe(
     recipe_id: str, scoped_service: ScopedRecipeService = Depends(scoped_recipe_service)
 ) -> PlainTextWrapper:
-    return PlainTextWrapper(recipe = to_plain_text(scoped_service.read_recipe(recipe_id)))
+    return PlainTextWrapper(recipe=to_plain_text(scoped_service.read_recipe(recipe_id)))
 
 
 @app.post("/recipe/edit")
