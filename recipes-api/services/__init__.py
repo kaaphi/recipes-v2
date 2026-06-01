@@ -147,6 +147,7 @@ class RecipeService:
             ExpressionAttributeValues=expression_attribute_values,
             ConditionExpression=Attr("pk").exists(),
         )
+        self._invalidate_recipe(recipe_id)
         self._invalidate_user(user_id)
 
 

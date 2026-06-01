@@ -3,15 +3,16 @@ import { useFetch } from "@mantine/hooks";
 import { Marked } from "@ts-stack/markdown";
 import { useAuth } from "react-oidc-context";
 import { useParams } from "react-router";
+import { handleError } from "./main";
 
-interface IngredientList {
+export interface IngredientList {
     name?: string,
     ingredients: string[]
 }
 
-interface Recipe {
+export interface Recipe {
     title: string,
-    id: string,
+    recipe_id: string,
     method: string,
     sources: string[],
     ingredientLists: IngredientList[]
@@ -21,7 +22,7 @@ const Ingredients = ({list} : {list: IngredientList}) => {
     return (
     <div>{list && <Title order={4}>{list.name}</Title>}
     <List>
-        {list.ingredients.map((ingredient) => <List.Item>{ingredient}</List.Item>)}
+        {list.ingredients.map((ingredient, i) => <List.Item key={`ingredient-${i}`}>{ingredient}</List.Item>)}
     </List>
     </div>
     )
@@ -39,6 +40,8 @@ export const Recipe = () => {
         }
     );
 
+    handleError(error)
+
 
     return (
         <>
@@ -46,7 +49,7 @@ export const Recipe = () => {
             <Stack>
             <Title order={1}>{data?.title}</Title>
             <Title order={3}>Ingredients</Title>
-            {data?.ingredientLists.map((list) => <Ingredients list={list} />)}
+            {data?.ingredientLists.map((list, i) => <Ingredients key={`ingredients-${i}`} list={list} />)}
             <Title order={3 }>Method</Title>
             <Typography>
             <div dangerouslySetInnerHTML={{__html: Marked.parse(data?.method || "")}} />

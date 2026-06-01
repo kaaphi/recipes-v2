@@ -3,6 +3,7 @@ import { useFetch, useScrollIntoView } from "@mantine/hooks";
 import { useAuth } from "react-oidc-context";
 import { scrollToElement } from "./App";
 import { Link } from "react-router";
+import { handleError } from "./main";
 
 interface RecipeStub {
     title: string,
@@ -25,6 +26,8 @@ export const AllRecipes = () => {
             }
         }
     );
+
+    handleError(error)
 
 
     const scrollToLetter = (letter: string) => {
