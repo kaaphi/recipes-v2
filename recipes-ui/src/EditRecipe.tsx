@@ -1,7 +1,7 @@
 import { Button, Flex, Group, LoadingOverlay, rem, Stack, Textarea } from "@mantine/core";
 import { useFetch } from "@mantine/hooks";
 import { useAuth, type AuthContextProps } from "react-oidc-context";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { headerHeight } from "./App";
 import { useCallback, useState } from "react";
 import { Recipe } from "./Recipe";
@@ -100,8 +100,7 @@ const EditComponent = ({recipeId, data, loading, auth}:EditComponentParams) => {
                             // 3. Force the native textarea HTML element to fill all available space
                             input: { flexGrow: 1, height: '100%' }
                         }}></Textarea>
-                        {/* <div style={{ flex: 1, background: 'red' }}>Middle (Grows)</div> */}
-                        <Group><Button type="submit">Save</Button><Button variant="outline">Cancel</Button></Group>
+                        <Group><Button type="submit">Save</Button><Button variant="outline" component={Link} to={recipeId ? `/recipe/${recipeId}` : "/"}>Cancel</Button></Group>
                     </Stack>
                 </form>
             </Flex>
