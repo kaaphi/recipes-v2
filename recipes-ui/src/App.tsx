@@ -31,7 +31,7 @@ export const scrollToElement = (elementId: string) => {
 };   
 
 export const App = () => {
-  const [opened, { toggle }] = useDisclosure();
+  const [opened, { toggle, close }] = useDisclosure();
 
   return (
     <MantineProvider>
@@ -57,7 +57,7 @@ export const App = () => {
           </Group>
         </AppShell.Header>
 
-        <AppShell.Navbar><NavBar /></AppShell.Navbar>
+        <AppShell.Navbar><NavBar close={close} /></AppShell.Navbar>
 
         <AppShell.Main><Outlet /></AppShell.Main>
       </AppShell>

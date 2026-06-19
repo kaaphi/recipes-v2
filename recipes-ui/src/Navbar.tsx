@@ -48,7 +48,7 @@ const NavItem = (props: NavBarProps) => {
 }
 
 
-export const NavBar = () => {
+export const NavBar = ({close} : {close: () => void}) => {
   const auth = useAuth();
   const { recipeId } = useParams();
 
@@ -61,11 +61,14 @@ export const NavBar = () => {
   };
 
   return (<Stack>
-    <NavItem label="Home" leftSection={<HouseIcon size={16} />} link={auth.isAuthenticated ? "/" : "/login"} authCondition="always" />
-    <NavItem label="New Recipe" leftSection={<PlusIcon size={16} />} link="/new" />
-    <NavItem label="Edit Recipe" leftSection={<PencilSimpleIcon size={16} />} link={`/recipe/${recipeId}/edit`} disabled={!recipeId} />
+    <NavItem label="Home" leftSection={<HouseIcon size={16} />} link={auth.isAuthenticated ? "/" : "/login"} onClick={close} authCondition="always" />
+    <NavItem label="New Recipe" leftSection={<PlusIcon size={16} />} link="/new" onClick={close} />
+    <NavItem label="Edit Recipe" leftSection={<PencilSimpleIcon size={16} />} link={`/recipe/${recipeId}/edit`} onClick={close} disabled={!recipeId} />
     <NavItem label="Sign in" leftSection={<SignInIcon size={16} />} onClick={() => auth.signinRedirect()} authCondition="requireNoAuth" />
-    <NavItem label="Sign out" leftSection={<SignOutIcon size={16} />} onClick={() => signOutRedirect()} />
+    <NavItem label="Sign out" leftSection={<SignOutIcon size={16} />} onClick={() => {
+        close();
+        signOutRedirect();
+        }} />
 
   </Stack>
   );
