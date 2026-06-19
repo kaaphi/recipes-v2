@@ -13,6 +13,7 @@ import { Recipe } from './Recipe.tsx';
 import { CreateRecipe, EditRecipe } from './EditRecipe.tsx';
 import { notifications, Notifications } from '@mantine/notifications';
 import { XIcon } from '@phosphor-icons/react';
+import { theme } from './Theme.tsx';
 
 
 const cognitoAuthConfig = {
@@ -89,7 +90,7 @@ export const handleError = (error: Error | null, message?: string, title?: strin
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider {...cognitoAuthConfig}>
-      <MantineProvider>
+      <MantineProvider theme={theme}>
         <Notifications />
         <BrowserRouter>
           <Routes>
