@@ -17,5 +17,17 @@ dev = [
     "ruff>=0.15.14",
     "pytest>=9.0.3",
 ]
+
+[project.scripts]
+dynamodb_local = "dev.dynamodb_local:main"
+
+[build-system]
+requires = ["uv_build"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+module-name = "app"
+
 [tool.setuptools]
 packages = ["schemas", "services"]

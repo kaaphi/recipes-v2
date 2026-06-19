@@ -17,7 +17,7 @@ table_name = "Recipes"
 Start:
 ```shell
 docker compose -f dynamodb-local-docker-compose.yml up -d
-uv run tests/dynamodb_local.py
+uv run dynamodb_local
 ```
 
 Stop:

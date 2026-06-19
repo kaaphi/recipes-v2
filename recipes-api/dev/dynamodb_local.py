@@ -5,8 +5,8 @@ import boto3
 from botocore.exceptions import ClientError
 from pydantic import TypeAdapter
 
-from schemas.dynamodb_models import DynamoDbItem
-from services import RecipeService
+from app.schemas.dynamodb_models import DynamoDbItem
+from app.services import RecipeService
 
 DEFAULT_TABLE_NAME = "Recipes"
 
@@ -80,8 +80,7 @@ class DynamoDBLocal:
             table.wait_until_exists()
             logger.info(f"Table {self.table_name} created.")
 
-
-if __name__ == "__main__":
+def main():
     logging.basicConfig(level=logging.INFO)
     db = DynamoDBLocal()
     db.create_table()
@@ -111,3 +110,7 @@ if __name__ == "__main__":
     # service.save_item(User(pk="u#1234", sk="#m", display_name="Bob"))
 
     print(service.query_user("28d123d0-5071-706f-8316-9c8d66e043c3"))
+
+if __name__ == "__main__":
+    main()
+

@@ -1,8 +1,8 @@
 import pytest
 
-from schemas.api_models import PlainTextRecipe
-from schemas.dynamodb_models import IngredientList
-from schemas.plain_text_format import from_plain_text, to_plain_text
+from app.schemas.api_models import PlainTextRecipe
+from app.schemas.dynamodb_models import IngredientList
+from app.schemas.plain_text_format import from_plain_text, to_plain_text
 
 valid_test_data = [
     (
