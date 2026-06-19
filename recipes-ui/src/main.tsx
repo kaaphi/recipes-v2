@@ -21,6 +21,7 @@ const cognitoAuthConfig = {
   redirect_uri: `${window.location.origin}/oidc_callback`,
   response_type: "code",
   scope: "openid",
+
   onSigninCallback: (_user :  User | undefined) => {
     // Remove authentication payload from URL
     window.history.replaceState(
@@ -28,9 +29,6 @@ const cognitoAuthConfig = {
       document.title,
       window.location.pathname
     );
-    
-    // Redirect to main page
-    window.location.href = "/"; 
   }
 };
 
@@ -42,7 +40,7 @@ const NotFound = () => {
 
 type AuthWrapperProps = {
   expectAuthenticated?: boolean,
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 const AuthWrapper = ({expectAuthenticated=true, children} : AuthWrapperProps) => {
@@ -90,14 +88,14 @@ export const handleError = (error: Error | null, message?: string, title?: strin
 // wrap the application with AuthProvider
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider>
-      <Notifications />
-      <AuthProvider {...cognitoAuthConfig}>
+    <AuthProvider {...cognitoAuthConfig}>
+      <MantineProvider>
+        <Notifications />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<App />}>
               <Route index element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
-              <Route path="/oidc_callback/*" element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
+              <Route path="/oidc_callback/*" element={<AuthWrapper expectAuthenticated={false} />} />
               <Route path="/recipe/:recipeId" element={<AuthWrapper><Recipe /></AuthWrapper>} />
               <Route path="/recipe/:recipeId/edit" element={<AuthWrapper><EditRecipe /></AuthWrapper>} />
               <Route path="/new" element={<AuthWrapper><CreateRecipe /></AuthWrapper>} />
@@ -106,7 +104,7 @@ createRoot(document.getElementById('root')!).render(
             </Route>
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
-    </MantineProvider>
+      </MantineProvider>
+    </AuthProvider>
   </StrictMode>,
 )
