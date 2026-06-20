@@ -1,12 +1,10 @@
-// import './App.css'
-// import '@mantine/core/styles.css';
-
 import { Center, Group, MantineProvider, Title } from '@mantine/core';
 import { AppShell, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Outlet } from 'react-router';
 import { NavBar } from './Navbar';
 import { CookingPotIcon } from '@phosphor-icons/react';
+import { useUserRecipes, type UseUserRecipesReturnValue } from './Recipes';
 
 
 export const Login = () => {
@@ -28,10 +26,15 @@ export const scrollToElement = (elementId: string) => {
     top: absoluteElementTop - headerHeight,
     behavior: 'smooth'
   });
-};   
+};
+
+export type OutletContextType = {
+  userRecipes: UseUserRecipesReturnValue
+}
 
 export const App = () => {
   const [opened, { toggle, close }] = useDisclosure();
+  const userRecipes = useUserRecipes()
 
   return (
     <MantineProvider>
@@ -57,9 +60,9 @@ export const App = () => {
           </Group>
         </AppShell.Header>
 
-        <AppShell.Navbar><NavBar close={close} /></AppShell.Navbar>
+        <AppShell.Navbar><NavBar closeNavBar={close} userRecipes={userRecipes} /></AppShell.Navbar>
 
-        <AppShell.Main><Outlet /></AppShell.Main>
+        <AppShell.Main><Outlet context={{userRecipes}}/></AppShell.Main>
       </AppShell>
     </MantineProvider>
   );
