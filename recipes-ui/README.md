@@ -24,3 +24,8 @@ VITE_OAUTH_DOMAIN=
 The OAuth details can be retrieved from an existing infra stack's OAuthDetails output.
 
 For local development, use a `.env.local` file.
+
+## Favicon
+
+Favicon image from https://www.svgrepo.com/svg/96764/mitten (public domain).
+Favicon package generated using https://realfavicongenerator.net/.
