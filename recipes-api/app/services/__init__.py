@@ -8,7 +8,12 @@ from cachetools import TTLCache, cachedmethod
 from pydantic import TypeAdapter
 from ulid import ULID
 
-from app.schemas.api_models import UserRecipes, RecipeStub, PlainTextRecipe
+from app.schemas.api_models import (
+    UserRecipes,
+    RecipeStub,
+    PlainTextRecipe,
+    RecipeSearchResult,
+)
 from app.schemas.config import RecipesConfig
 from app.schemas.dynamodb_models import (
     Recipe as Recipe,
@@ -16,6 +21,7 @@ from app.schemas.dynamodb_models import (
     DynamoDbItem,
     User,
 )
+from app.services.search import search_recipes
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +83,9 @@ class RecipeService:
     def _query_user(self, user_id) -> tuple[User | None, list[Recipe]]:
         logger.info("Quering DynamoDB for user %s", user_id)
         pk = f"u#{user_id}"
-        result = self.table.query(KeyConditionExpression=Key("pk").eq(pk))
+        result = self.table.query(
+            KeyConditionExpression=Key("pk").eq(pk) & Key("sk").lt("zr#")
+        )
         adapter = TypeAdapter(list[DynamoDbItem])
         items = adapter.validate_python(result["Items"])
 
@@ -92,6 +100,13 @@ class RecipeService:
             raise TypeError(f"No user metadata record for pk {pk}!")
 
         return user, recipe_list
+
+    def search_user_recipes(
+        self, user_id: str, search_string: str
+    ) -> list[RecipeSearchResult]:
+        _, recipe_list = self._query_user(user_id)
+
+        return search_recipes(recipe_list, search_string)
 
     @cachedmethod(lambda self: self._recipe_cache, lock=lambda self: self._recipe_lock)
     def read_recipe(self, recipe_id) -> Recipe | None:
@@ -187,6 +202,9 @@ class ScopedRecipeService:
         if user is None:
             raise self._on_scope_error(f"Bad user {self.user_id}!")
         return user
+
+    def search_recipes(self, search_string: str) -> list[RecipeSearchResult]:
+        return self._service.search_user_recipes(self.user_id, search_string)
 
     def create_recipe(self, plain_text_recipe: PlainTextRecipe) -> Recipe:
         return self._service.create_recipe(self.user_id, plain_text_recipe)

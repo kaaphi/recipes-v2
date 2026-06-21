@@ -1,7 +1,7 @@
 import { AppShell, Autocomplete, Highlight, NavLink, Stack, type AutocompleteProps, type ComboboxItem, type NavLinkProps, type OptionsFilter } from "@mantine/core";
 import { HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon } from "@phosphor-icons/react";
 import { useAuth } from "react-oidc-context";
-import { NavLink as RouterNavLink, useParams } from 'react-router';
+import { NavLink as RouterNavLink, useNavigate, useParams } from 'react-router';
 import type { UseUserRecipesReturnValue } from "./Recipes";
 import { useState } from "react";
 
@@ -62,6 +62,7 @@ const SearchBar = ({ userRecipes }: SearchBarParams) => {
     if (auth.isAuthenticated) {
         const recipeTitles = userRecipes.data?.recipes?.map(r => r.title)
         const [value, setValue] = useState('');
+        const navigate = useNavigate();
 
         const renderOption: AutocompleteProps['renderOption'] = ({ option }) => (
             <Highlight
@@ -103,8 +104,10 @@ const SearchBar = ({ userRecipes }: SearchBarParams) => {
                     event.preventDefault();
                     const formData = new FormData(event.currentTarget);
                     const searchText = formData.get('search-box') as string
-                    //TODO
-                    alert(searchText)
+                    if (searchText) {
+                        setValue("")
+                        navigate(`/search?q=${searchText}`)
+                    }
                 }}>
                     <Autocomplete placeholder="Search" leftSection={<MagnifyingGlassIcon size={16} />} name="search-box" data={recipeTitles} value={value} onChange={setValue} renderOption={renderOption} filter={optionsFilter} type="search" />
                     {/* <Button type="submit">Search</Button> */}

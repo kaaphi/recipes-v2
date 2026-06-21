@@ -80,6 +80,7 @@ class DynamoDBLocal:
             table.wait_until_exists()
             logger.info(f"Table {self.table_name} created.")
 
+
 def main():
     logging.basicConfig(level=logging.INFO)
     db = DynamoDBLocal()
@@ -111,6 +112,6 @@ def main():
 
     print(service.query_user("28d123d0-5071-706f-8316-9c8d66e043c3"))
 
+
 if __name__ == "__main__":
     main()
-

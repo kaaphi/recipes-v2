@@ -14,6 +14,7 @@ import { CreateRecipe, EditRecipe } from './EditRecipe.tsx';
 import { notifications, Notifications } from '@mantine/notifications';
 import { XIcon } from '@phosphor-icons/react';
 import { theme } from './Theme.tsx';
+import { SearchResults } from './SearchResults.tsx';
 
 
 const cognitoAuthConfig = {
@@ -51,14 +52,17 @@ const AuthWrapper = ({expectAuthenticated=true, children} : AuthWrapperProps) =>
     return (<div>Authentication error... {auth.error.message}</div>);
   }
 
-  if (expectAuthenticated && !auth.isAuthenticated) {
-    return (<Navigate to="/login" replace />);
-  }
+  if (!auth.isLoading) {
+    if (expectAuthenticated && !auth.isAuthenticated) {
+      console.log("Not logged in, redirecting to /login")
+      return (<Navigate to="/login" replace />);
+    }
 
-  if (!expectAuthenticated && auth.isAuthenticated) {
-    return (<Navigate to="/" replace />);
+    if (!expectAuthenticated && auth.isAuthenticated) {
+      console.log("Logged in, redirecting to /")
+      return (<Navigate to="/" replace />);
+    }
   }
-
 
   return (
     <>
@@ -98,6 +102,7 @@ createRoot(document.getElementById('root')!).render(
               <Route index element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
               <Route path="/oidc_callback/*" element={<AuthWrapper expectAuthenticated={false} />} />
               <Route path="/recipe/:recipeId" element={<AuthWrapper><Recipe /></AuthWrapper>} />
+              <Route path="/search" element={<AuthWrapper><SearchResults /></AuthWrapper>} />
               <Route path="/recipe/:recipeId/edit" element={<AuthWrapper><EditRecipe /></AuthWrapper>} />
               <Route path="/new" element={<AuthWrapper><CreateRecipe /></AuthWrapper>} />
               <Route path="/login" element={<AuthWrapper expectAuthenticated={false}><Login /></AuthWrapper>} />

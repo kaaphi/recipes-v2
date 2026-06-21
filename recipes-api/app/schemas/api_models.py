@@ -1,3 +1,5 @@
+from enum import Enum
+
 from pydantic import BaseModel
 
 from app.schemas.dynamodb_models import User, IngredientList, EditableRecipe, Recipe
@@ -6,6 +8,20 @@ from app.schemas.dynamodb_models import User, IngredientList, EditableRecipe, Re
 class RecipeStub(BaseModel):
     title: str
     id: str
+
+
+class RecipeSearchMatchType(str, Enum):
+    title = "title"
+    ingredient = "ingredient"
+    method = "method"
+
+
+class RecipeSearchResult(BaseModel):
+    title: str
+    id: str
+    match_context: str
+    match_type: RecipeSearchMatchType
+    score: float
 
 
 class UserRecipes(BaseModel):
