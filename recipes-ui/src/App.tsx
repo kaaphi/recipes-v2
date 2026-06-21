@@ -5,7 +5,12 @@ import { Outlet } from 'react-router';
 import { NavBar } from './Navbar';
 import { CookingPotIcon } from '@phosphor-icons/react';
 import { useUserRecipes, type UseUserRecipesReturnValue } from './Recipes';
+import { useState } from 'react';
 
+
+export type RecipeState = {
+  isSharedRecipe: boolean
+}
 
 export const Login = () => {
    return (
@@ -29,12 +34,21 @@ export const scrollToElement = (elementId: string) => {
 };
 
 export type OutletContextType = {
-  userRecipes: UseUserRecipesReturnValue
+  userRecipes: UseUserRecipesReturnValue;
+  recipeState: RecipeState;
+  setRecipeState: React.Dispatch<React.SetStateAction<RecipeState>>;
 }
 
 export const App = () => {
   const [opened, { toggle, close }] = useDisclosure();
   const userRecipes = useUserRecipes()
+  const [recipeState, setRecipeState] = useState<RecipeState>({isSharedRecipe: false})
+
+  const context = {
+    userRecipes,
+    recipeState,
+    setRecipeState
+  }
 
   return (
     <MantineProvider>
@@ -60,9 +74,9 @@ export const App = () => {
           </Group>
         </AppShell.Header>
 
-        <AppShell.Navbar><NavBar closeNavBar={close} userRecipes={userRecipes} /></AppShell.Navbar>
+        <AppShell.Navbar><NavBar closeNavBar={close} context={context} /></AppShell.Navbar>
 
-        <AppShell.Main><Outlet context={{userRecipes}}/></AppShell.Main>
+        <AppShell.Main><Outlet context={context}/></AppShell.Main>
       </AppShell>
     </MantineProvider>
   );

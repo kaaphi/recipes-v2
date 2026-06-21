@@ -13,6 +13,7 @@ from app.schemas.api_models import (
     RecipeStub,
     PlainTextRecipe,
     RecipeSearchResult,
+    SharedUserRecipes,
 )
 from app.schemas.config import RecipesConfig
 from app.schemas.dynamodb_models import (
@@ -20,6 +21,7 @@ from app.schemas.dynamodb_models import (
     BaseRecipes,
     DynamoDbItem,
     User,
+    SharedUser,
 )
 from app.services.search import search_recipes
 
@@ -80,7 +82,7 @@ class RecipeService:
                 batch.put_item(Item=item.dump_for_dynamodb())
 
     @cachedmethod(lambda self: self._user_cache, lock=lambda self: self._user_lock)
-    def _query_user(self, user_id) -> tuple[User | None, list[Recipe]]:
+    def _query_user(self, user_id: str) -> tuple[User | None, list[Recipe]]:
         logger.info("Quering DynamoDB for user %s", user_id)
         pk = f"u#{user_id}"
         result = self.table.query(
@@ -101,10 +103,25 @@ class RecipeService:
 
         return user, recipe_list
 
+    def query_user_recipes(self, user_id: str, archive: bool = False) -> list[Recipe]:
+        if not archive:
+            _, recipe_list = self._query_user(user_id)
+            return recipe_list
+        else:
+            logger.info("Quering DynamoDB for user %s archive=%s", user_id, archive)
+            pk = f"u#{user_id}"
+            sk_prefix = "r#" if not archive else "zr#"
+            result = self.table.query(
+                KeyConditionExpression=Key("pk").eq(pk)
+                & Key("sk").begins_with(sk_prefix)
+            )
+            adapter = TypeAdapter(list[Recipe])
+            return adapter.validate_python(result["Items"])
+
     def search_user_recipes(
-        self, user_id: str, search_string: str
+        self, user_id: str, search_string: str, search_archive: bool = False
     ) -> list[RecipeSearchResult]:
-        _, recipe_list = self._query_user(user_id)
+        recipe_list = self.query_user_recipes(user_id, archive=search_archive)
 
         return search_recipes(recipe_list, search_string)
 
@@ -178,6 +195,22 @@ class ScopedRecipeService:
         self.user_id = user_id
         self._on_scope_error = on_scope_error
         self._on_not_found = on_not_found
+        self.user = recipe_service.query_user(user_id).user
+
+    def _check_scope(
+        self, user_id: str, scope_err_msg: str, allow_shared_scope: bool = True
+    ) -> None:
+        if not (
+            user_id == self.user_id
+            or (
+                allow_shared_scope
+                and user_id in [share.id for share in self.user.users_shared]
+            )
+        ):
+            logger.warning(
+                f"User {self.user_id} is not allowed to view {user_id}. Can only view {[share.id for share in self.user.users_shared]}"
+            )
+            raise self._on_scope_error(scope_err_msg)
 
     def _raise_scope_error(self, msg: str):
         error = self._on_scope_error(msg)
@@ -193,9 +226,23 @@ class ScopedRecipeService:
 
     def read_recipe(self, recipe_id: str) -> Recipe | None:
         recipe = self._service.read_recipe(recipe_id)
-        if recipe is not None and recipe.user_id != self.user_id:
-            raise self._on_scope_error(recipe_id)
+        if recipe is not None:
+            self._check_scope(recipe.user_id, recipe.recipe_id)
         return self._raise_not_found_error(recipe)
+
+    def query_shared_user(self, user_id: str) -> SharedUserRecipes | None:
+        self._check_scope(user_id, user_id)
+        recipes = [
+            RecipeStub(id=r.recipe_id, title=r.title)
+            for r in self._service.query_user_recipes(user_id)
+        ]
+        recipes.sort(key=lambda r: r.title)
+
+        user: SharedUser = next(
+            user for user in self.user.users_shared if user.id == user_id
+        )
+
+        return SharedUserRecipes(user=user, recipes=recipes)
 
     def query_user(self) -> UserRecipes:
         user = self._service.query_user(self.user_id)
@@ -210,4 +257,5 @@ class ScopedRecipeService:
         return self._service.create_recipe(self.user_id, plain_text_recipe)
 
     def edit_recipe(self, recipe_id: str, plain_text_recipe: PlainTextRecipe) -> None:
+        self._check_scope(self.user_id, recipe_id, allow_shared_scope=False)
         self._service.edit_recipe(self.user_id, recipe_id, plain_text_recipe)

@@ -1,0 +1,19 @@
+info:
+  name: Get Shared User Recipes
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{host}}/shared/:userId/recipes"
+  params:
+    - name: userId
+      value: d8513370-a0c1-7006-a35d-0d28324d39b3
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

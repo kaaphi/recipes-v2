@@ -2,8 +2,10 @@ import { List, LoadingOverlay, Stack, Title, Typography } from "@mantine/core";
 import { useFetch } from "@mantine/hooks";
 import { Marked } from "@ts-stack/markdown";
 import { useAuth } from "react-oidc-context";
-import { useParams } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { handleError } from "./main";
+import type { OutletContextType } from "./App";
+import { useEffect } from "react";
 
 export interface IngredientList {
     name?: string,
@@ -13,6 +15,7 @@ export interface IngredientList {
 export interface Recipe {
     title: string,
     recipe_id: string,
+    user_id: string
     method: string,
     sources: string[],
     ingredientLists: IngredientList[]
@@ -39,6 +42,19 @@ export const Recipe = () => {
             }
         }
     );
+    const {recipeState, setRecipeState} = useOutletContext<OutletContextType>();
+
+    useEffect(() => {
+        const isShared = data?.user_id != auth.user?.profile.sub;
+
+        // Only update if the value is actually different to avoid unnecessary loops
+        if (recipeState.isSharedRecipe !== isShared) {
+            setRecipeState({ ...recipeState, isSharedRecipe: isShared });
+        }
+
+        // Dependencies: Run only when these values change
+    }, [data?.user_id, auth.user?.profile.sub, recipeState.isSharedRecipe]); 
+
 
     handleError(error)
 

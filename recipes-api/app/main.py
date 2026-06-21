@@ -3,7 +3,12 @@ import logging
 from fastapi import FastAPI, Depends, Response, HTTPException, status
 from fastapi_cognito import CognitoAuth, CognitoToken
 
-from app.schemas.api_models import UserRecipes, PlainTextWrapper, RecipeSearchResult
+from app.schemas.api_models import (
+    UserRecipes,
+    PlainTextWrapper,
+    RecipeSearchResult,
+    SharedUserRecipes,
+)
 from app.schemas.config import load_config, RecipesConfig
 from app.schemas.dynamodb_models import Recipe
 from app.schemas.plain_text_format import to_plain_text, from_plain_text
@@ -44,6 +49,14 @@ def get_recipes(
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
 ) -> UserRecipes:
     return scoped_service.query_user()
+
+
+@app.get("/shared/{user_id}/recipes")
+def get_shared_recipes(
+    user_id: str,
+    scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
+) -> SharedUserRecipes:
+    return scoped_service.query_shared_user(user_id)
 
 
 @app.get("/user/recipes/search")

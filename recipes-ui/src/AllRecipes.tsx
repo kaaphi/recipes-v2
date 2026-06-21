@@ -1,12 +1,23 @@
 import { Anchor, Button, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
 import { scrollToElement, type OutletContextType } from "./App";
-import { Link, useOutletContext } from "react-router";
-import type { RecipeStub } from "./Recipes";
+import { Link, useOutletContext, useParams } from "react-router";
+import { useAuthFetch, type RecipeStub, type UserRecipes } from "./Recipes";
+import type { UseFetchReturnValue } from "@mantine/hooks";
+
+const getRecipes = (): UseFetchReturnValue<UserRecipes> => {
+    const { userId } = useParams();
+
+    if (userId) {
+        return useAuthFetch(`/api/shared/${userId}/recipes`)
+    } else {
+        const { userRecipes } = useOutletContext<OutletContextType>();
+        return userRecipes
+    }
+}
 
 
 export const AllRecipes = () => {
-    const { userRecipes } = useOutletContext<OutletContextType>();
-    const { data, loading } = userRecipes
+    const { data, loading } = getRecipes()
 
     const scrollToLetter = (letter: string) => {
         scrollToElement(`letter_${letter}`)

@@ -101,6 +101,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/" element={<App />}>
               <Route index element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
               <Route path="/oidc_callback/*" element={<AuthWrapper expectAuthenticated={false} />} />
+              <Route path="/shared/:userId" element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
               <Route path="/recipe/:recipeId" element={<AuthWrapper><Recipe /></AuthWrapper>} />
               <Route path="/search" element={<AuthWrapper><SearchResults /></AuthWrapper>} />
               <Route path="/recipe/:recipeId/edit" element={<AuthWrapper><EditRecipe /></AuthWrapper>} />

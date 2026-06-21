@@ -7,7 +7,7 @@ from pydantic import BaseModel, Tag, Discriminator, computed_field, field_valida
 def dynamodb_dump_args(additional_exclude: set[str] = set()) -> dict:
     return {
         "mode": "json",
-        "exclude": {"is_archived"} | additional_exclude,
+        "exclude": {"is_archived", "recipe_id", "user_id"} | additional_exclude,
     }
 
 
@@ -15,6 +15,7 @@ class BaseRecipes(BaseModel):
     pk: str
     sk: str
 
+    @computed_field
     @property
     def user_id(self) -> str:
         return self.pk.split("#")[1]
@@ -37,8 +38,14 @@ class BaseRecipes(BaseModel):
         return self.model_dump(**dynamodb_dump_args(additional_exclude))
 
 
+class SharedUser(BaseModel):
+    id: str
+    display_name: str
+
+
 class User(BaseRecipes):
     display_name: str
+    users_shared: list[SharedUser]
     sk: str = "#m"
 
     @field_validator("sk", mode="after")

@@ -62,7 +62,7 @@ export const SearchResults = () => {
 
     return (
         <>
-            <Title order={3}>"{query}"</Title>
+            <Title order={3}>&ldquo;{query}&rdquo;</Title>
 
             <Table highlightOnHover verticalSpacing="sm">
                 <Table.Tbody>

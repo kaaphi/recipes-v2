@@ -7,10 +7,17 @@ export interface RecipeStub {
     title: string,
     id: string,
 }
+
+export interface User {
+    display_name: string
+    users_shared: {
+        id: string,
+        display_name: string,
+    }[]|undefined
+}
+
 export interface UserRecipes {
-    user: {
-        display_name: string
-    },
+    user: User,
     recipes: RecipeStub[]
 }
 
@@ -25,15 +32,11 @@ export interface RecipeSearchResult {
 export type UseUserRecipesReturnValue = UseFetchReturnValue<UserRecipes>
 export type UseSearchRecipesReturnValue = UseFetchReturnValue<RecipeSearchResult[]>
 
-export const useSearchRecipes = (query: string): UseSearchRecipesReturnValue => {
+export const useAuthFetch = <T,>(url: string): UseFetchReturnValue<T> => {
     const auth = useAuth();
 
-    const params = new URLSearchParams({
-        q: query
-    });
-
-    const rv = useFetch<RecipeSearchResult[]>(
-        `/api/user/recipes/search?${params.toString()}`,
+    const rv = useFetch<T>(
+        url,
         {
             autoInvoke: false,
             headers: {
@@ -53,26 +56,14 @@ export const useSearchRecipes = (query: string): UseSearchRecipesReturnValue => 
     return rv
 }
 
+export const useSearchRecipes = (query: string): UseSearchRecipesReturnValue => {
+    const params = new URLSearchParams({
+        q: query
+    });
+
+    return useAuthFetch(`/api/user/recipes/search?${params.toString()}`)
+}
+
 export const useUserRecipes = (): UseUserRecipesReturnValue => {
-    const auth = useAuth();
-
-    const rv = useFetch<UserRecipes>(
-        "/api/user/recipes",
-        {
-            autoInvoke: false,
-            headers: {
-                "Authorization": `Bearer ${auth.user?.access_token}`
-            }
-        }
-    );
-
-    useEffect(() => {
-        if (auth.isAuthenticated && auth.user?.access_token) {
-            rv.refetch();
-        }
-    }, [auth.isAuthenticated, auth.user, rv.refetch]);
-
-    handleError(rv.error)
-
-    return rv
+    return useAuthFetch("/api/user/recipes")
 }
