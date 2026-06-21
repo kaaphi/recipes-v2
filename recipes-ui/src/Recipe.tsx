@@ -1,11 +1,12 @@
-import { List, LoadingOverlay, Stack, Title, Typography } from "@mantine/core";
-import { useFetch } from "@mantine/hooks";
+import { Anchor, Collapse, List, LoadingOverlay, Paper, Stack, Text, Title, Typography, UnstyledButton } from "@mantine/core";
+import { useDisclosure, useFetch } from "@mantine/hooks";
 import { Marked } from "@ts-stack/markdown";
 import { useAuth } from "react-oidc-context";
 import { useOutletContext, useParams } from "react-router";
 import { handleError } from "./main";
 import type { OutletContextType } from "./App";
 import { useEffect } from "react";
+import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
 
 export interface IngredientList {
     name?: string,
@@ -29,6 +30,38 @@ const Ingredients = ({list} : {list: IngredientList}) => {
     </List>
     </div>
     )
+}
+
+const SourceLink = ({ text }: { text: string }) => {
+  // Regex to check if text starts with http:// or https://
+  const isUrl = /^https?:\/\//i.test(text);
+
+  if (isUrl) {
+    return (
+      <Anchor href={text} target="_blank" rel="noopener noreferrer">
+        {text}
+      </Anchor>
+    );
+  }
+
+  return <Text>{text}</Text>;
+}
+
+const Sources = ({sources} : {sources?: string[]}) => {
+    if (sources && sources.length > 0) {
+        const [expanded, { toggle }] = useDisclosure(false);
+
+        return (
+            <Paper shadow="xs" p="xs">
+            <UnstyledButton onClick={toggle}>{expanded ? <CaretDownIcon weight="fill"/> : <CaretRightIcon weight="fill"/>} Sources</UnstyledButton>
+            <Collapse expanded={expanded}>
+            <List>
+            {sources.map((source, idx) => <List.Item key={`source-${idx}`}><SourceLink text={source}/></List.Item>)}
+            </List>
+            </Collapse>
+            </Paper>
+        )
+    }
 }
 
 export const Recipe = () => {
@@ -70,6 +103,7 @@ export const Recipe = () => {
             <Typography>
             <div dangerouslySetInnerHTML={{__html: Marked.parse(data?.method || "")}} />
             </Typography>
+            <Sources sources={data?.sources} />
             </Stack>
         </>
     );
