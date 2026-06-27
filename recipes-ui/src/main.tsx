@@ -9,12 +9,12 @@ import type { User } from 'oidc-client-ts';
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { LoadingOverlay, MantineProvider, Title } from '@mantine/core';
 import { AllRecipes } from './AllRecipes.tsx';
-import { Recipe } from './Recipe.tsx';
 import { CreateRecipe, EditRecipe } from './EditRecipe.tsx';
 import { notifications, Notifications } from '@mantine/notifications';
 import { XIcon } from '@phosphor-icons/react';
 import { theme } from './Theme.tsx';
 import { SearchResults } from './SearchResults.tsx';
+import { RecipeView } from './Recipe.tsx';
 
 
 const cognitoAuthConfig = {
@@ -102,7 +102,7 @@ createRoot(document.getElementById('root')!).render(
               <Route index element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
               <Route path="/oidc_callback/*" element={<AuthWrapper expectAuthenticated={false} />} />
               <Route path="/shared/:userId" element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
-              <Route path="/recipe/:recipeId" element={<AuthWrapper><Recipe /></AuthWrapper>} />
+              <Route path="/recipe/:recipeId" element={<AuthWrapper><RecipeView /></AuthWrapper>} />
               <Route path="/search" element={<AuthWrapper><SearchResults /></AuthWrapper>} />
               <Route path="/recipe/:recipeId/edit" element={<AuthWrapper><EditRecipe /></AuthWrapper>} />
               <Route path="/new" element={<AuthWrapper><CreateRecipe /></AuthWrapper>} />

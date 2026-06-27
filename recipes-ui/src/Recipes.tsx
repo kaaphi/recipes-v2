@@ -3,9 +3,27 @@ import { handleError } from "./main";
 import { useAuth } from "react-oidc-context";
 import { useEffect } from "react";
 
+export interface IngredientList {
+    name?: string;
+    ingredients: string[];
+}
+
+export interface Recipe {
+    title: string;
+    recipe_id: string;
+    user_id: string;
+    method: string;
+    sources: string[];
+    ingredientLists: IngredientList[];
+}
+
 export interface RecipeStub {
     title: string,
     id: string,
+}
+
+export const stubFromRecipe = (recipe: Recipe): RecipeStub => {
+    return {title: recipe.title, id: recipe.recipe_id}
 }
 
 export interface User {

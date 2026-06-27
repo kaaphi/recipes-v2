@@ -1,5 +1,5 @@
 import { Anchor, Collapse, List, LoadingOverlay, Paper, Stack, Text, Title, Typography, UnstyledButton } from "@mantine/core";
-import { useDisclosure, useFetch } from "@mantine/hooks";
+import { useDisclosure } from "@mantine/hooks";
 import { Marked } from "@ts-stack/markdown";
 import { useAuth } from "react-oidc-context";
 import { useOutletContext, useParams } from "react-router";
@@ -7,20 +7,8 @@ import { handleError } from "./main";
 import type { OutletContextType } from "./App";
 import { useEffect } from "react";
 import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
-
-export interface IngredientList {
-    name?: string,
-    ingredients: string[]
-}
-
-export interface Recipe {
-    title: string,
-    recipe_id: string,
-    user_id: string
-    method: string,
-    sources: string[],
-    ingredientLists: IngredientList[]
-}
+import { stubFromRecipe, useAuthFetch, type IngredientList, type Recipe } from "./Recipes";
+import { useRecentRecipes } from "./RecentRecipes";
 
 const Ingredients = ({list} : {list: IngredientList}) => {
     return (
@@ -64,18 +52,22 @@ const Sources = ({sources} : {sources?: string[]}) => {
     }
 }
 
-export const Recipe = () => {
+export const RecipeView = () => {
     const auth = useAuth();
     const { recipeId } = useParams();
-    const { data, loading, error } = useFetch<Recipe>(
-        `/api/recipe/${recipeId}`,
-        {
-            headers: {
-                "Authorization": `Bearer ${auth.user?.access_token}`
-            }
-        }
+    useAuthFetch
+
+    const { data, loading, error } = useAuthFetch<Recipe>(
+        `/api/recipe/${recipeId}`
     );
     const {recipeState, setRecipeState} = useOutletContext<OutletContextType>();
+    const { addRecentRecipe } = useRecentRecipes()
+
+    useEffect(() => {
+        if (data) {
+            addRecentRecipe(stubFromRecipe(data))
+        }
+    }, [data, addRecentRecipe])
 
     useEffect(() => {
         const isShared = data?.user_id != auth.user?.profile.sub;

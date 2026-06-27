@@ -1,10 +1,11 @@
-import { AppShell, Autocomplete, Highlight, NavLink, Stack, type AutocompleteProps, type ComboboxItem, type NavLinkProps, type OptionsFilter } from "@mantine/core";
-import { BookOpenTextIcon, HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon, UserListIcon } from "@phosphor-icons/react";
+import { AppShell, Autocomplete, CloseButton, Highlight, NavLink, Stack, type AutocompleteProps, type ComboboxItem, type NavLinkProps, type OptionsFilter } from "@mantine/core";
+import { BookBookmarkIcon, BookOpenTextIcon, HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon, UserListIcon } from "@phosphor-icons/react";
 import { useAuth } from "react-oidc-context";
 import { NavLink as RouterNavLink, useNavigate, useParams } from 'react-router';
 import type { User } from "./Recipes";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { OutletContextType } from "./App";
+import { useRecentRecipes } from "./RecentRecipes";
 
 const NAV_ICON_SIZE = 24
 
@@ -62,10 +63,11 @@ type SearchBarParams = NavBarParams
 
 const SearchBar = ({ context }: SearchBarParams) => {
     const auth = useAuth();
+    const [value, setValue] = useState('');
+    const navigate = useNavigate();
+
     if (auth.isAuthenticated) {
         const recipeTitles = context.userRecipes.data?.recipes?.map(r => r.title)
-        const [value, setValue] = useState('');
-        const navigate = useNavigate();
 
         const renderOption: AutocompleteProps['renderOption'] = ({ option }) => (
             <Highlight
@@ -130,6 +132,27 @@ const OtherRecipes = ({ user }: { user?: User }) => {
     }
 }
 
+const RecentRecipes = () => {
+    const {recentRecipes, removeRecentRecipe} = useRecentRecipes()
+
+    const handleRemove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation(); // Stops the event from bubbling up to parent elements
+        e.preventDefault();  // Stops the router/browser from changing the URL
+
+        // Read the custom data attribute directly from the DOM node
+        const id = e.currentTarget.getAttribute('data-recipe-id');
+        if (id) {
+            removeRecentRecipe(id);
+        }
+    }, [removeRecentRecipe]);
+
+    return (
+        <NavItem label="Recent Recipes" href="#required-for-focus" leftSection={<BookBookmarkIcon size={NAV_ICON_SIZE} />}>
+            {recentRecipes?.map((recentRecipe) => <NavItem key={recentRecipe.id} label={recentRecipe.title} link={`/recipe/${recentRecipe.id}`} rightSection={<CloseButton data-recipe-id={recentRecipe.id}  onClick={handleRemove}/>}/>)}
+        </NavItem>
+    )
+}
+
 export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
     const auth = useAuth();
     const { recipeId } = useParams();
@@ -147,6 +170,7 @@ export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
             <AppShell.Section grow>
                 <NavItem label="Home" leftSection={<HouseIcon size={NAV_ICON_SIZE} />} link={auth.isAuthenticated ? "/" : "/login"} onClick={closeNavBar} authCondition="always" />
                 <OtherRecipes user={context.userRecipes.data?.user}/>
+                <RecentRecipes />
                 <NavItem label="New Recipe" leftSection={<PlusIcon size={NAV_ICON_SIZE} />} link="/new" onClick={closeNavBar} />
                 <NavItem label="Edit Recipe" leftSection={<PencilSimpleIcon size={NAV_ICON_SIZE} />} link={`/recipe/${recipeId}/edit`} onClick={closeNavBar} disabled={!recipeId || context.recipeState.isSharedRecipe} />
                 <NavItem label="Sign in" leftSection={<SignInIcon size={NAV_ICON_SIZE} />} onClick={() => auth.signinRedirect()} authCondition="requireNoAuth" />

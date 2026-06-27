@@ -1,10 +1,9 @@
 import { Button, Flex, Group, LoadingOverlay, rem, Stack, Textarea } from "@mantine/core";
-import { useFetch } from "@mantine/hooks";
 import { useAuth, type AuthContextProps } from "react-oidc-context";
 import { Link, useNavigate, useParams } from "react-router";
 import { headerHeight } from "./App";
 import { useCallback, useState } from "react";
-import { Recipe } from "./Recipe";
+import { useAuthFetch, type Recipe } from "./Recipes";
 import { handleError } from "./main";
 
 
@@ -119,16 +118,9 @@ export const CreateRecipe = () => {
 export const EditRecipe = () => {
     const auth = useAuth();
     const { recipeId } = useParams();
-    const { data, loading, error } = useFetch<RecipeText>(
-        `/api/recipe/edit/${recipeId}`,
-        {
-            headers: {
-                "Authorization": `Bearer ${auth.user?.access_token}`
-            },
-        }
+    const { data, loading } = useAuthFetch<RecipeText>(
+        `/api/recipe/edit/${recipeId}`
     );
-
-    handleError(error)
 
     return (
         <EditComponent recipeId={recipeId} data={data} loading={loading} auth={auth} />
