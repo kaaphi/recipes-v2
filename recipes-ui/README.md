@@ -27,5 +27,5 @@ For local development, use a `.env.local` file.
 
 ## Favicon
 
-Favicon image from https://www.svgrepo.com/svg/96764/mitten (public domain).
+Favicon image from https://www.svgrepo.com/svg/31955/cooking-pot-outline-with-cover (public domain).
 Favicon package generated using https://realfavicongenerator.net/.
