@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 import tomllib
 from pathlib import Path
 from typing import Sequence
@@ -9,6 +10,7 @@ from constructs import Construct
 from infrastructure import Config
 from infrastructure.recipe_stack import RecipeStack
 
+logging.basicConfig(level=logging.INFO)
 
 class DeploymentStage(cdk.Stage):
     def __init__(self, scope: Construct, config: Config, **kwargs) -> None:

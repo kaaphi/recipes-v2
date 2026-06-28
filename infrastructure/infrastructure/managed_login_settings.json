@@ -33,7 +33,7 @@
       "sessionTimerDisplay": "NONE"
     },
     "global": {
-      "colorSchemeMode": "DYNAMIC",
+      "colorSchemeMode": "LIGHT",
       "pageFooter": {
         "enabled": false
       },
@@ -393,11 +393,11 @@
       },
       "lightMode": {
         "active": {
-          "backgroundColor": "033160ff",
+          "backgroundColor": "145c9eff",
           "textColor": "ffffffff"
         },
         "defaults": {
-          "backgroundColor": "0972d3ff",
+          "backgroundColor": "3d88daff",
           "textColor": "ffffffff"
         },
         "disabled": {
@@ -405,7 +405,7 @@
           "borderColor": "ffffffff"
         },
         "hover": {
-          "backgroundColor": "033160ff",
+          "backgroundColor": "3075c2ff",
           "textColor": "ffffffff"
         }
       }
@@ -430,9 +430,9 @@
       },
       "lightMode": {
         "active": {
-          "backgroundColor": "d3e7f9ff",
-          "borderColor": "033160ff",
-          "textColor": "033160ff"
+          "backgroundColor": "3d88da1a",
+          "borderColor": "145c9eff",
+          "textColor": "145c9eff"
         },
         "defaults": {
           "backgroundColor": "ffffffff",
@@ -440,9 +440,9 @@
           "textColor": "0972d3ff"
         },
         "hover": {
-          "backgroundColor": "f2f8fdff",
-          "borderColor": "033160ff",
-          "textColor": "033160ff"
+          "backgroundColor": "3d88da0d",
+          "borderColor": "3d88daff",
+          "textColor": "3d88daff"
         }
       }
     }

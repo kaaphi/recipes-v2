@@ -65,8 +65,9 @@ class RecipeStack(Stack):
         callback_urls = []
         logout_urls = []
         if self.config.is_dev:
-            callback_urls.append("http://localhost:5173/oidc_callback")
-            logout_urls.append("http://localhost:5173/")
+            for host in self.config.host_names:
+                callback_urls.append(f"http://{host}:5173/oidc_callback")
+                logout_urls.append(f"http://{host}:5173/")
             password_policy = cognito.PasswordPolicy(
                 min_length=8,
                 require_digits=False,
