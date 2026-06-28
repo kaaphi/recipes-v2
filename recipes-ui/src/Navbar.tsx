@@ -132,7 +132,11 @@ const OtherRecipes = ({ user }: { user?: User }) => {
     }
 }
 
-const RecentRecipes = () => {
+type RecentRecipesParams = {
+    closeNavBar: () => void;
+}
+
+const RecentRecipes = ({closeNavBar}: RecentRecipesParams) => {
     const {recentRecipes, removeRecentRecipe} = useRecentRecipes()
 
     const handleRemove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
@@ -148,7 +152,7 @@ const RecentRecipes = () => {
 
     return (
         <NavItem label="Recent Recipes" href="#required-for-focus" leftSection={<BookBookmarkIcon size={NAV_ICON_SIZE} />}>
-            {recentRecipes?.map((recentRecipe) => <NavItem key={recentRecipe.id} label={recentRecipe.title} link={`/recipe/${recentRecipe.id}`} rightSection={<CloseButton data-recipe-id={recentRecipe.id}  onClick={handleRemove}/>}/>)}
+            {recentRecipes?.map((recentRecipe) => <NavItem key={recentRecipe.id} label={recentRecipe.title} onClick={closeNavBar} link={`/recipe/${recentRecipe.id}`} rightSection={<CloseButton data-recipe-id={recentRecipe.id}  onClick={handleRemove}/>}/>)}
         </NavItem>
     )
 }
@@ -170,7 +174,7 @@ export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
             <AppShell.Section grow>
                 <NavItem label="Home" leftSection={<HouseIcon size={NAV_ICON_SIZE} />} link={auth.isAuthenticated ? "/" : "/login"} onClick={closeNavBar} authCondition="always" />
                 <OtherRecipes user={context.userRecipes.data?.user}/>
-                <RecentRecipes />
+                <RecentRecipes closeNavBar={closeNavBar}/>
                 <NavItem label="New Recipe" leftSection={<PlusIcon size={NAV_ICON_SIZE} />} link="/new" onClick={closeNavBar} />
                 <NavItem label="Edit Recipe" leftSection={<PencilSimpleIcon size={NAV_ICON_SIZE} />} link={`/recipe/${recipeId}/edit`} onClick={closeNavBar} disabled={!recipeId || context.recipeState.isSharedRecipe} />
                 <NavItem label="Sign in" leftSection={<SignInIcon size={NAV_ICON_SIZE} />} onClick={() => auth.signinRedirect()} authCondition="requireNoAuth" />
