@@ -39,3 +39,14 @@ rmdir -Recurse .\docker\dynamodb\
 ```shell
 uv run fastapi dev --port 8080
 ```
+
+# Deployment
+
+## Build and push image
+
+```shell
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/u3d2w9n9
+docker build -t kaaphi/recipes-v2-api .
+docker tag kaaphi/recipes-v2-api:latest public.ecr.aws/u3d2w9n9/kaaphi/recipes-v2-api:latest
+docker push public.ecr.aws/u3d2w9n9/kaaphi/recipes-v2-api:latest
+```

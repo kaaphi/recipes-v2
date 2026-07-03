@@ -41,9 +41,9 @@ class RecipeService:
             raise Exception(
                 "Recipe service requires either a dynamodb table or a config"
             )
-        self._user_lock = threading.Lock()
+        self._user_lock = threading.RLock()
         self._user_cache = TTLCache(maxsize=10, ttl=18000)
-        self._recipe_lock = threading.Lock()
+        self._recipe_lock = threading.RLock()
         self._recipe_cache = TTLCache(maxsize=1024, ttl=18000)
 
     def _invalidate_user(self, user_id: str):
