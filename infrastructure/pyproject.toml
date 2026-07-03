@@ -8,6 +8,7 @@ dependencies = [
     "aws-cdk-lib>=2.257.0",
     "boto3>=1.43.14",
     "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.2",
 ]
 
 [dependency-groups]

@@ -1,4 +1,5 @@
 import json
+import tomllib
 from pathlib import Path
 
 from aws_cdk import (
@@ -6,8 +7,11 @@ from aws_cdk import (
     aws_cognito as cognito,
     CfnOutput,
     aws_dynamodb as dynamodb,
+    aws_backup as backup,
+    aws_events as events,
     RemovalPolicy,
     aws_iam as iam,
+    Duration,
 )
 from constructs import Construct
 
@@ -23,6 +27,9 @@ class RecipeStack(Stack):
         self.setup_cognito()
         table = self.setup_dynamodb()
         self.setup_user(table)
+
+        CfnOutput(self, "ProfileConfigJson", value=config.model_dump_json())
+
 
     def setup_user(self, table: dynamodb.Table):
         policy = iam.Policy(self, "RecipeAccessPolicy")
@@ -59,15 +66,65 @@ class RecipeStack(Stack):
             ),
         )
 
+        if not self.config.is_dev:
+            vault = backup.BackupVault(
+                self, "BackupVault", backup_vault_name="MultiTierDynamoDBVault"
+            )
+
+            # Create the Main Backup Plan
+            backup_plan = backup.BackupPlan(
+                self, "TieredBackupPlan", backup_plan_name="TieredDynamoDBBackup"
+            )
+
+            # RULE A: Short-term Daily Backups
+            backup_plan.add_rule(
+                backup.BackupPlanRule(
+                    backup_vault=vault,
+                    rule_name="DailyShortTerm",
+                    schedule_expression=events.Schedule.cron(
+                        minute="0", hour="2"
+                    ),  # Every day at 2 AM
+                    delete_after=Duration.days(3),  # Automatically delete after 3 days
+                )
+            )
+
+            # RULE B: Long-term Monthly Backups
+            backup_plan.add_rule(
+                backup.BackupPlanRule(
+                    backup_vault=vault,
+                    rule_name="MonthlyLongTerm",
+                    # Runs at 3 AM only on the 1st day of every month
+                    schedule_expression=events.Schedule.cron(
+                        minute="0", hour="3", day="1"
+                    ),
+                    delete_after=Duration.days(
+                        90
+                    ),  # Automatically delete after ~3 months
+                )
+            )
+
+            # Assign the table to the tiered plan
+            backup_plan.add_selection(
+                "Selection",
+                resources=[backup.BackupResource.from_dynamo_db_table(table)],
+            )
+
         return table
 
     def setup_cognito(self):
         callback_urls = []
         logout_urls = []
+
+
+        for host in self.config.hosts:
+            scheme = "https"
+            if self.config.is_dev and host.startswith("localhost"):
+                scheme = "http"
+
+            callback_urls.append(f"{scheme}://{host}/oidc_callback")
+            logout_urls.append(f"{scheme}://{host}/")
+
         if self.config.is_dev:
-            for host in self.config.host_names:
-                callback_urls.append(f"http://{host}:5173/oidc_callback")
-                logout_urls.append(f"http://{host}:5173/")
             password_policy = cognito.PasswordPolicy(
                 min_length=8,
                 require_digits=False,
@@ -76,7 +133,13 @@ class RecipeStack(Stack):
                 require_uppercase=False,
             )
         else:
-            raise Exception("non-dev environments not supported yet!")
+            password_policy = cognito.PasswordPolicy(
+                min_length=8,
+                require_digits=True,
+                require_lowercase=False,
+                require_symbols=False,
+                require_uppercase=True,
+            )
 
         user_pool = cognito.UserPool(
             self,

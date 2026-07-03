@@ -12,6 +12,7 @@ from infrastructure.recipe_stack import RecipeStack
 
 logging.basicConfig(level=logging.INFO)
 
+
 class DeploymentStage(cdk.Stage):
     def __init__(self, scope: Construct, config: Config, **kwargs) -> None:
         super().__init__(scope, config.id)
