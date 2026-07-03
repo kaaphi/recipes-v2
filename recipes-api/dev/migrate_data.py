@@ -3,43 +3,17 @@ import datetime
 import json
 import logging
 import os
-import tomllib
 import uuid
-from pathlib import Path
 
 import psycopg2
 import psycopg2.extras
 from pydantic import BaseModel, TypeAdapter
+
 from app.schemas.dynamodb_models import Recipe, IngredientList, User, BaseRecipes
+from dev import Config, get_default_config_path, load_migration_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class PostgresConfig(BaseModel):
-    host: str
-    database: str
-    user: str
-    password: str
-
-
-class Config(BaseModel):
-    """
-    Config for the data migration
-    """
-
-    load_from_file: bool
-    """Whether to load the legacy config data from a file or postgres"""
-    base_directory: Path = Path(os.getcwd())
-    """The base directory for reading/writing input and output files when they are relative paths"""
-    legacy_data_file: Path
-    """The file to read/write legacy data to"""
-    output_data_file: Path
-    """The file to write v2  output to"""
-    postgres: PostgresConfig
-    """Config for the postgres connection"""
-    users: dict[int, User]
-    """Map of legacy user ID to v2 User data"""
 
 
 class LegacyIngredient(BaseModel):
@@ -137,21 +111,13 @@ def load_legacy_from_json() -> list[LegacyRecipeContainer]:
     return containers
 
 
-def get_default_config_path() -> str:
-    config_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(config_dir, "migrate_config.toml")
-
-
 def main():
     parser = argparse.ArgumentParser(description="Migrate v1 postgres data to v2.")
     parser.add_argument("-c", "--config", type=str, default=get_default_config_path())
     args = parser.parse_args()
 
-    logger.info(f"Loading config from {args.config}")
-    with open(args.config, "rb") as f:
-        data = tomllib.load(f)
     global config
-    config = Config.model_validate(data)
+    config = load_migration_config(args.config)
 
     os.chdir(config.base_directory)
     logger.info(f"Working in directory {os.getcwd()}")

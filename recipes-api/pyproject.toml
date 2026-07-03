@@ -20,7 +20,7 @@ dev = [
 ]
 
 [project.scripts]
-dynamodb_local = "dev.dynamodb_local:main"
+dynamodb_loader = "dev.dynamodb_loader:main"
 migrate_data = "dev.migrate_data:main"
 
 [build-system]

@@ -1,5 +1,5 @@
+import argparse
 import logging
-from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
@@ -7,10 +7,11 @@ from pydantic import TypeAdapter
 
 from app.schemas.dynamodb_models import DynamoDbItem
 from app.services import RecipeService
+from dev import get_default_config_path, load_migration_config
 
 DEFAULT_TABLE_NAME = "Recipes"
 
-DEFAULT_CONFIG = {
+DYNAMO_DB_LOCAL_CONFIG = {
     "endpoint_url": "http://localhost:8000",
     "region_name": "us-west-2",
     "aws_access_key_id": "dummy",
@@ -20,10 +21,13 @@ DEFAULT_CONFIG = {
 logger = logging.getLogger(__name__)
 
 
-class DynamoDBLocal:
+class DynamoDBLoader:
     def __init__(
-        self, table_name: str = DEFAULT_TABLE_NAME, config: dict = DEFAULT_CONFIG
+        self,
+        table_name: str = DEFAULT_TABLE_NAME,
+        config: dict = DYNAMO_DB_LOCAL_CONFIG,
     ):
+        self.config = config
         self.table_name = table_name
         self.dynamodb_resource = boto3.resource("dynamodb", **config)
         self.table = self.dynamodb_resource.Table(self.table_name)
@@ -40,6 +44,9 @@ class DynamoDBLocal:
                 raise  # Re-raise if it's a different error
 
     def create_table(self):
+        if self.config != DYNAMO_DB_LOCAL_CONFIG:
+            raise Exception("Cannot create table if config is not DynamoDB local!")
+
         if self.table_exists():
             logger.info(f"Table {self.table_name} already exists.")
             pass
@@ -82,35 +89,42 @@ class DynamoDBLocal:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Migrate v1 postgres data to v2.")
+    parser.add_argument("-c", "--config", type=str, default=get_default_config_path())
+    parser.add_argument("-t", "--table", type=str, default=DEFAULT_TABLE_NAME)
+    environment_group = parser.add_mutually_exclusive_group()
+    environment_group.add_argument("--local", action="store_true")
+    environment_group.add_argument("--aws", nargs="+", type=str)
+    args = parser.parse_args()
+    migration_config = load_migration_config(args.config)
+
     logging.basicConfig(level=logging.INFO)
-    db = DynamoDBLocal()
-    db.create_table()
+
+    if not args.local:
+        aws_config = {k: v for s in args.aws for k, v in [s.split("=", 1)]}
+        db = DynamoDBLoader(table_name=args.table, config=aws_config)
+        confirm = input(
+            f"You will be writing to table {db.table_name}, type YES to confirm: "
+        )
+        if not confirm == "YES":
+            logger.warning("Canceled writing to table.")
+            return
+    else:
+        db = DynamoDBLoader(table_name=args.table, config=DYNAMO_DB_LOCAL_CONFIG)
+        db.create_table()
+
+    if not db.table_exists():
+        raise Exception(f"Table {db.table_name} does not exist!")
+
     service = RecipeService(table=db.table)
 
     with open(
-        Path(__file__).parent.parent.joinpath("test-data", "recipes_v2.json"),
+        migration_config.base_directory.joinpath(migration_config.output_data_file),
         "rb",
     ) as f:
         adapter = TypeAdapter(list[DynamoDbItem])
-        recipes = adapter.validate_json(f.read())
-        service.save_items(recipes)
-
-    #
-    # service.save_item(
-    #     Recipe(
-    #         pk="u#1234",
-    #         sk="r#1234",
-    #         title="My Recipe",
-    #         method="My Method",
-    #         ingredientLists=[
-    #             IngredientList(ingredients=["one", "two", "three"]),
-    #             IngredientList(name="other", ingredients=["one", "two", "three"]),
-    #         ],
-    #     )
-    # )
-    # service.save_item(User(pk="u#1234", sk="#m", display_name="Bob"))
-
-    print(service.query_user("28d123d0-5071-706f-8316-9c8d66e043c3"))
+        items = adapter.validate_json(f.read())
+        service.save_items(items)
 
 
 if __name__ == "__main__":
