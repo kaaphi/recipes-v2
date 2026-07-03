@@ -7,7 +7,7 @@ from pydantic import BaseModel, Tag, Discriminator, computed_field, field_valida
 def dynamodb_dump_args(additional_exclude: set[str] = set()) -> dict:
     return {
         "mode": "json",
-        "exclude": {"is_archived", "recipe_id", "user_id"} | additional_exclude,
+        "exclude": {"is_archived", "user_id"} | additional_exclude,
     }
 
 
@@ -45,7 +45,7 @@ class SharedUser(BaseModel):
 
 class User(BaseRecipes):
     display_name: str
-    users_shared: list[SharedUser]
+    users_shared: list[SharedUser] = []
     sk: str = "#m"
 
     @field_validator("sk", mode="after")

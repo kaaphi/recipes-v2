@@ -23,6 +23,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY .python-version pyproject.toml uv.lock ./
 COPY app ./app
+COPY README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
