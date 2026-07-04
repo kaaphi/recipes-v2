@@ -1,23 +1,10 @@
 import { Anchor, Button, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
 import { scrollToElement, type OutletContextType } from "./App";
 import { Link, useOutletContext, useParams } from "react-router";
-import { useAuthFetch, type RecipeStub, type UserRecipes } from "./Recipes";
-import type { UseFetchReturnValue } from "@mantine/hooks";
+import { useAuthFetch, type RecipeStub, type UserRecipes, type UseUserRecipesReturnValue } from "./Recipes";
 
-const getRecipes = (): UseFetchReturnValue<UserRecipes> => {
-    const { userId } = useParams();
-
-    if (userId) {
-        return useAuthFetch(`/api/shared/${userId}/recipes`)
-    } else {
-        const { userRecipes } = useOutletContext<OutletContextType>();
-        return userRecipes
-    }
-}
-
-
-export const AllRecipes = () => {
-    const { data, loading } = getRecipes()
+export const AllRecipes = (props: {recipes: UseUserRecipesReturnValue}) => {
+    const { data, loading } = props.recipes
 
     const scrollToLetter = (letter: string) => {
         scrollToElement(`letter_${letter}`)
@@ -61,4 +48,17 @@ export const AllRecipes = () => {
             </Stack>
         </>
     );
+}
+
+export const SharedRecipes = () => {
+    const { userId } = useParams();
+    const recipes = useAuthFetch<UserRecipes>(`/api/shared/${userId}/recipes`)
+
+    return <AllRecipes recipes={recipes}/>
+}
+
+export const MyRecipes = () => {
+    const { userRecipes } = useOutletContext<OutletContextType>();
+
+    return <AllRecipes recipes={userRecipes}/>
 }

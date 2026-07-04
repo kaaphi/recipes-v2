@@ -8,7 +8,7 @@ import { AuthProvider, useAuth } from 'react-oidc-context';
 import type { User } from 'oidc-client-ts';
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { LoadingOverlay, MantineProvider, Title } from '@mantine/core';
-import { AllRecipes } from './AllRecipes.tsx';
+import { MyRecipes, SharedRecipes } from './AllRecipes.tsx';
 import { CreateRecipe, EditRecipe } from './EditRecipe.tsx';
 import { notifications, Notifications } from '@mantine/notifications';
 import { XIcon } from '@phosphor-icons/react';
@@ -99,9 +99,9 @@ createRoot(document.getElementById('root')!).render(
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<App />}>
-              <Route index element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
+              <Route index element={<AuthWrapper><MyRecipes /></AuthWrapper>} />
               <Route path="/oidc_callback/*" element={<AuthWrapper expectAuthenticated={false} />} />
-              <Route path="/shared/:userId" element={<AuthWrapper><AllRecipes /></AuthWrapper>} />
+              <Route path="/shared/:userId" element={<AuthWrapper><SharedRecipes /></AuthWrapper>} />
               <Route path="/recipe/:recipeId" element={<AuthWrapper><RecipeView /></AuthWrapper>} />
               <Route path="/search" element={<AuthWrapper><SearchResults /></AuthWrapper>} />
               <Route path="/recipe/:recipeId/edit" element={<AuthWrapper><EditRecipe /></AuthWrapper>} />
