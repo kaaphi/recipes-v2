@@ -113,25 +113,24 @@ const SearchBar = ({ context, closeNavBar }: SearchBarParams) => {
             // Use the override string if provided; otherwise fall back to state
             const searchText = overrideValue !== undefined ? overrideValue : value;
             if (searchText) {
-                setValue("")
-                navigate(`/search?q=${searchText}`)
+                navigate(`/search?q=${encodeURIComponent(searchText)}`)
+                // Defer resetting the state until Mantine's click cycle finishes
+                queueMicrotask(() => {
+                    setValue("");
+                });
             }
             closeNavBar()
         }
 
         const onOptionSubmit = (option: string) => {
-            console.log(`Options submitted: ${option}`)
-
-            // Update the state immediately
-            setValue(option);
-
+            console.log(`Options submitted: ${option}  ${typeof option}`)
             handleSubmit(undefined, option)
         }
 
         return (
             <Stack style={{ marginInline: "var(--mantine-spacing-xs)" }}>
                 <form ref={formRef} onSubmit={(event) => handleSubmit(event)}>
-                    <Autocomplete placeholder="Search" leftSection={<MagnifyingGlassIcon size={NAV_ICON_SIZE} />} name="search-box" data={recipeTitles} value={value} onChange={setValue} renderOption={renderOption} filter={optionsFilter} type="search" onOptionSubmit={onOptionSubmit}/>
+                    <Autocomplete placeholder="Search" leftSection={<MagnifyingGlassIcon size={NAV_ICON_SIZE} />} name="search-box" data={recipeTitles} value={value} onChange={setValue} renderOption={renderOption} filter={optionsFilter} type="search" onOptionSubmit={onOptionSubmit} clearable/>
                 </form>
             </Stack>
         )
