@@ -67,7 +67,7 @@ const SearchBar = ({ context }: SearchBarParams) => {
     const navigate = useNavigate();
 
     if (auth.isAuthenticated) {
-        const recipeTitles = context.userRecipes.data?.recipes?.map(r => r.title)
+        const recipeTitles = [... new Set(context.userRecipes.data?.recipes?.map(r => r.title))]
 
         const renderOption: AutocompleteProps['renderOption'] = ({ option }) => (
             <Highlight
