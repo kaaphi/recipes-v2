@@ -3,7 +3,7 @@ import { BookBookmarkIcon, BookOpenTextIcon, HouseIcon, MagnifyingGlassIcon, Pen
 import { useAuth } from "react-oidc-context";
 import { NavLink as RouterNavLink, useNavigate, useParams } from 'react-router';
 import type { User } from "./Recipes";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { OutletContextType } from "./App";
 import { useRecentRecipes } from "./RecentRecipes";
 
@@ -61,10 +61,11 @@ type NavBarParams = {
 }
 type SearchBarParams = NavBarParams
 
-const SearchBar = ({ context }: SearchBarParams) => {
+const SearchBar = ({ context, closeNavBar }: SearchBarParams) => {
     const auth = useAuth();
     const [value, setValue] = useState('');
     const navigate = useNavigate();
+    const formRef = useRef<HTMLFormElement>(null);
 
     if (auth.isAuthenticated) {
         const recipeTitles = [... new Set(context.userRecipes.data?.recipes?.map(r => r.title))]
@@ -102,31 +103,51 @@ const SearchBar = ({ context }: SearchBarParams) => {
             return filtered;
         };
 
+        
+        const handleSubmit = (
+            event?: React.SubmitEvent<HTMLFormElement>,
+            overrideValue?: string
+        ) => {
+            event?.preventDefault();
+
+            // Use the override string if provided; otherwise fall back to state
+            const searchText = overrideValue !== undefined ? overrideValue : value;
+            if (searchText) {
+                setValue("")
+                navigate(`/search?q=${searchText}`)
+            }
+            closeNavBar()
+        }
+
+        const onOptionSubmit = (option: string) => {
+            console.log(`Options submitted: ${option}`)
+
+            // Update the state immediately
+            setValue(option);
+
+            handleSubmit(undefined, option)
+        }
 
         return (
             <Stack style={{ marginInline: "var(--mantine-spacing-xs)" }}>
-                <form onSubmit={(event) => {
-                    event.preventDefault();
-                    const formData = new FormData(event.currentTarget);
-                    const searchText = formData.get('search-box') as string
-                    if (searchText) {
-                        setValue("")
-                        navigate(`/search?q=${searchText}`)
-                    }
-                }}>
-                    <Autocomplete placeholder="Search" leftSection={<MagnifyingGlassIcon size={NAV_ICON_SIZE} />} name="search-box" data={recipeTitles} value={value} onChange={setValue} renderOption={renderOption} filter={optionsFilter} type="search" />
-                    {/* <Button type="submit">Search</Button> */}
+                <form ref={formRef} onSubmit={(event) => handleSubmit(event)}>
+                    <Autocomplete placeholder="Search" leftSection={<MagnifyingGlassIcon size={NAV_ICON_SIZE} />} name="search-box" data={recipeTitles} value={value} onChange={setValue} renderOption={renderOption} filter={optionsFilter} type="search" onOptionSubmit={onOptionSubmit}/>
                 </form>
             </Stack>
         )
     }
 }
 
-const OtherRecipes = ({ user }: { user?: User }) => {
+type OtherRecipesParams = {
+    user?: User;
+    closeNavBar: () => void;
+}
+
+const OtherRecipes = ({ user, closeNavBar }: OtherRecipesParams) => {
     if (user?.users_shared) {
         return (
             <NavItem label="Other Recipes" href="#required-for-focus" leftSection={<BookOpenTextIcon size={NAV_ICON_SIZE} />}>
-                {user.users_shared.map((user) => <NavItem key={user.id} leftSection={<UserListIcon size={NAV_ICON_SIZE}/>} label={user.display_name} link={`/shared/${user.id}`}/>)}
+                {user.users_shared.map((user) => <NavItem onClick={closeNavBar} key={user.id} leftSection={<UserListIcon size={NAV_ICON_SIZE}/>} label={user.display_name} link={`/shared/${user.id}`}/>)}
             </NavItem>
         )
     }
@@ -173,7 +194,7 @@ export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
         <>
             <AppShell.Section grow>
                 <NavItem label="Home" leftSection={<HouseIcon size={NAV_ICON_SIZE} />} link={auth.isAuthenticated ? "/" : "/login"} onClick={closeNavBar} authCondition="always" />
-                <OtherRecipes user={context.userRecipes.data?.user}/>
+                <OtherRecipes user={context.userRecipes.data?.user} closeNavBar={closeNavBar}/>
                 <RecentRecipes closeNavBar={closeNavBar}/>
                 <NavItem label="New Recipe" leftSection={<PlusIcon size={NAV_ICON_SIZE} />} link="/new" onClick={closeNavBar} />
                 <NavItem label="Edit Recipe" leftSection={<PencilSimpleIcon size={NAV_ICON_SIZE} />} link={`/recipe/${recipeId}/edit`} onClick={closeNavBar} disabled={!recipeId || context.recipeState.isSharedRecipe} />

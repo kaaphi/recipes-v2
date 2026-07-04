@@ -1,5 +1,5 @@
 import { Anchor, Group, Highlight, Table, Text, Title } from "@mantine/core";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useSearchRecipes, type RecipeSearchResult } from "./Recipes";
 
 type ResultParams = {
@@ -49,6 +49,7 @@ const Result = ({ result, query }: ResultParams) => {
 export const SearchResults = () => {
     const [searchParams] = useSearchParams();
     const query = searchParams.get("q")
+    const navigate = useNavigate();
 
     if (!query) {
         return (
@@ -60,21 +61,25 @@ export const SearchResults = () => {
 
     const { data } = useSearchRecipes(query)
 
-    return (
-        <>
-            <Title order={3}>&ldquo;{query}&rdquo;</Title>
+    if (data && data.length == 1 && data[0].match_type === "title") {
+        navigate(`/recipe/${data[0].id}`)
+    } else {
+        return (
+            <>
+                <Title order={3}>&ldquo;{query}&rdquo;</Title>
 
-            <Table highlightOnHover verticalSpacing="sm">
-                <Table.Tbody>
-                    {data?.map((result) => 
-                        <Table.Tr key={result.id}>
-                            <Table.Td p={0}>
-                                <Result result={result} query={query} />
-                            </Table.Td>
-                        </Table.Tr>
-                    )}
-                </Table.Tbody>
-            </Table>
-        </>
-    )
+                <Table highlightOnHover verticalSpacing="sm">
+                    <Table.Tbody>
+                        {data?.map((result) =>
+                            <Table.Tr key={result.id}>
+                                <Table.Td p={0}>
+                                    <Result result={result} query={query} />
+                                </Table.Td>
+                            </Table.Tr>
+                        )}
+                    </Table.Tbody>
+                </Table>
+            </>
+        )
+    }
 }
