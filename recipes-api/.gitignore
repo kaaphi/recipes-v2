@@ -1,6 +1,6 @@
 config.toml
 local-docker-config.toml
-dev/migrate_config.toml
+dev/migrate_config*.toml
 
 test-data
 

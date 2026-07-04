@@ -68,12 +68,12 @@ class RecipeStack(Stack):
 
         if not self.config.is_dev:
             vault = backup.BackupVault(
-                self, "BackupVault", backup_vault_name="MultiTierDynamoDBVault"
+                self, "RecipeVault"
             )
 
             # Create the Main Backup Plan
             backup_plan = backup.BackupPlan(
-                self, "TieredBackupPlan", backup_plan_name="TieredDynamoDBBackup"
+                self, "TieredBackupPlan"
             )
 
             # RULE A: Short-term Daily Backups
