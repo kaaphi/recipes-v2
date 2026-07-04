@@ -5,7 +5,7 @@ import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import App, { Login } from './App.tsx';
 import { AuthProvider, useAuth } from 'react-oidc-context';
-import type { User } from 'oidc-client-ts';
+import { WebStorageStateStore, type User } from 'oidc-client-ts';
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { LoadingOverlay, MantineProvider, Title } from '@mantine/core';
 import { MyRecipes, SharedRecipes } from './AllRecipes.tsx';
@@ -23,6 +23,8 @@ const cognitoAuthConfig = {
   redirect_uri: `${window.location.origin}/oidc_callback`,
   response_type: "code",
   scope: "openid",
+  // This tells the library to persist the session across browser closes
+  userStore: new WebStorageStateStore({ store: window.localStorage }), 
 
   onSigninCallback: (_user :  User | undefined) => {
     // Remove authentication payload from URL
