@@ -3,9 +3,9 @@ import { AppShell, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Outlet } from 'react-router';
 import { NavBar } from './Navbar';
-import { CookingPotIcon } from '@phosphor-icons/react';
 import { useUserRecipes, type UseUserRecipesReturnValue } from './Recipes';
 import { useState } from 'react';
+import CookingPotIcon from '../public/favicon.svg?react'
 
 
 export type RecipeState = {
@@ -15,7 +15,7 @@ export type RecipeState = {
 export const Login = () => {
    return (
     <Center>
-    <CookingPotIcon size={128} />
+      <CookingPotIcon width={128} height={128} />
     </Center>
   );
 }
@@ -29,7 +29,7 @@ export const scrollToElement = (elementId: string) => {
   const absoluteElementTop = elementRect.top + window.scrollY;
   window.scrollTo({
     top: absoluteElementTop - headerHeight,
-    behavior: 'smooth'
+    behavior: 'instant'
   });
 };
 
