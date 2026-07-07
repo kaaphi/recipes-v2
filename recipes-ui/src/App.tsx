@@ -4,16 +4,17 @@ import { useDisclosure } from '@mantine/hooks';
 import { Outlet } from 'react-router';
 import { NavBar } from './Navbar';
 import { useUserRecipes, type UseUserRecipesReturnValue } from './Recipes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CookingPotIcon from '../public/favicon.svg?react'
+import { hasAuthParams, useAuth } from 'react-oidc-context';
 
 
 export type RecipeState = {
   isSharedRecipe: boolean
 }
 
-export const Login = () => {
-   return (
+export const Login = () => { 
+  return (
     <Center>
       <CookingPotIcon width={128} height={128} />
     </Center>
@@ -43,6 +44,19 @@ export const App = () => {
   const [opened, { toggle, close }] = useDisclosure();
   const userRecipes = useUserRecipes()
   const [recipeState, setRecipeState] = useState<RecipeState>({isSharedRecipe: false})
+
+    const auth = useAuth();
+
+  useEffect(() => {
+    // If the library is ready, the user is unauthenticated, 
+    // and we aren't currently mid-redirect or processing an auth code callback...
+    if (!auth.isLoading && !auth.isAuthenticated && !hasAuthParams() && !auth.activeNavigator) {
+      // Direct, built-in call to silently attempt a wake-up using the stored refresh token
+      auth.signinSilent().catch(() => {
+        console.log("No valid refresh token or Cognito session found.");
+      });
+    }
+  }, [auth.isLoading, auth.isAuthenticated, auth.activeNavigator, auth]);
 
   const context = {
     userRecipes,

@@ -4,7 +4,7 @@ import '@mantine/notifications/styles.css';
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import App, { Login } from './App.tsx';
-import { AuthProvider, useAuth } from 'react-oidc-context';
+import { AuthProvider, useAuth, type AuthProviderNoUserManagerProps } from 'react-oidc-context';
 import { WebStorageStateStore, type User } from 'oidc-client-ts';
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { LoadingOverlay, MantineProvider, Title } from '@mantine/core';
@@ -17,7 +17,7 @@ import { SearchResults } from './SearchResults.tsx';
 import { RecipeView } from './Recipe.tsx';
 
 
-const cognitoAuthConfig = {
+const cognitoAuthConfig : AuthProviderNoUserManagerProps = {
   authority: import.meta.env.VITE_OAUTH_AUTHORITY,
   client_id: import.meta.env.VITE_OAUTH_CLIENT_ID,
   redirect_uri: `${window.location.origin}/oidc_callback`,
