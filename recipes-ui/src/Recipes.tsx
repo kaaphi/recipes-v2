@@ -1,22 +1,23 @@
 import { useFetch, type UseFetchReturnValue } from "@mantine/hooks";
-import { handleError } from "./main";
 import { useAuth } from "react-oidc-context";
 import { useEffect } from "react";
+import { notifications } from "@mantine/notifications";
+import { XIcon } from "@phosphor-icons/react";
 
 export interface IngredientList {
     name?: string;
     ingredients: string[];
 }
 
-export interface Recipe {
+export interface Recipe extends Record<string, unknown> {
     title: string;
     recipe_id: string;
     user_id: string;
     method: string;
     sources: string[];
     ingredientLists: IngredientList[];
-    created_at: Date
-    updated_at?: Date|null
+    created_at: string
+    updated_at?: string | null
 }
 
 export interface RecipeStub {
@@ -25,7 +26,7 @@ export interface RecipeStub {
 }
 
 export const stubFromRecipe = (recipe: Recipe): RecipeStub => {
-    return {title: recipe.title, id: recipe.recipe_id}
+    return { title: recipe.title, id: recipe.recipe_id }
 }
 
 export interface User {
@@ -33,7 +34,7 @@ export interface User {
     users_shared: {
         id: string,
         display_name: string,
-    }[]|undefined
+    }[] | undefined
 }
 
 export interface UserRecipes {
@@ -52,7 +53,7 @@ export interface RecipeSearchResult {
 export type UseUserRecipesReturnValue = UseFetchReturnValue<UserRecipes>
 export type UseSearchRecipesReturnValue = UseFetchReturnValue<RecipeSearchResult[]>
 
-export const useAuthFetch = <T extends Record<string,any>,>(url: string, ...dateAttributes: string[]): UseFetchReturnValue<T> => {
+export const useAuthFetch = <T,>(url: string): UseFetchReturnValue<T> => {
     const auth = useAuth();
 
     const rv = useFetch<T>(
@@ -65,29 +66,40 @@ export const useAuthFetch = <T extends Record<string,any>,>(url: string, ...date
         }
     );
 
+    const { refetch } = rv
+
     useEffect(() => {
         if (auth.isAuthenticated && auth.user?.access_token) {
-            rv.refetch();
+            refetch();
         }
-    }, [auth.isAuthenticated, auth.user, rv.refetch]);
+    }, [auth.isAuthenticated, auth.user, refetch]);
 
-    handleError(rv.error)
+    useEffect(() => {
+        if (!rv.error) {
+            return
+        }
 
-    if (rv.data) {
-        rv.data = handleDates(rv.data, ...dateAttributes)
-    }
+        notifications.show({
+            title: "Error",
+            message: `${rv.error}`,
+            icon: <XIcon />,
+            color: "red",
+            autoClose: false,
+            position: "top-center"
+        })
+    }, [rv.error])
 
-    return rv
+    return rv;
 }
 
-export const handleDates = <T extends Record<string,any>>(obj: T, ...dateAttributes: string[]): T => {
-    const rv = { ...obj } as any;
-    
+export const handleDates = <T extends Record<string, unknown>>(obj: T, ...dateAttributes: string[]): T => {
+    const rv = { ...obj } as Record<string, unknown>;
+
     dateAttributes.forEach((a) => {
-        const value = obj[a]
+        const value = obj[a] as string
         if (value) {
             const date = new Date(value)
-            rv[a] = date as any
+            rv[a] = date as unknown
         }
     })
 

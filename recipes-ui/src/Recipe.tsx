@@ -3,7 +3,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { Marked } from "@ts-stack/markdown";
 import { useAuth } from "react-oidc-context";
 import { useOutletContext, useParams } from "react-router";
-import { handleError } from "./main";
 import type { OutletContextType } from "./App";
 import { useEffect } from "react";
 import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
@@ -37,8 +36,8 @@ const SourceLink = ({ text }: { text: string }) => {
 }
 
 const Sources = ({ sources }: { sources?: string[] }) => {
+    const [expanded, { toggle }] = useDisclosure(false);
     if (sources && sources.length > 0) {
-        const [expanded, { toggle }] = useDisclosure(false);
 
         return (
             <Paper shadow="xs" p="xs">
@@ -53,15 +52,18 @@ const Sources = ({ sources }: { sources?: string[] }) => {
     }
 }
 
-const formatDatetime = (date?: Date): string => {
+const formatDatetime = (date?: Date|null): string => {
     return date ? dayjs(date).format("YYYY-MM-DD") : ""
 }
 
 const CreatedLastUpdated = ({ recipe }: { recipe?: Recipe | null }) => {
-    const hasUpdatedTime = recipe?.updated_at && recipe?.updated_at.getTime() !== recipe?.created_at.getTime()
+    const created = recipe?.created_at ? new Date(recipe.created_at) : null
+    const updated = recipe?.updated_at ? new Date(recipe.updated_at) : null
 
-    const text = hasUpdatedTime ? `Created ${formatDatetime(recipe?.created_at)} (Last updated ${formatDatetime(recipe?.updated_at!)})` : 
-                                  `Created ${formatDatetime(recipe?.created_at)}`
+    const hasUpdatedTime = updated && updated.getTime() !== created?.getTime()
+
+    const text = hasUpdatedTime ? `Created ${formatDatetime(created)} (Last updated ${formatDatetime(updated)})` : 
+                                  `Created ${formatDatetime(created)}`
 
     return <Text c="dimmed" size="xs" fs="italic" ta="right">{text}</Text>
 }
@@ -69,12 +71,9 @@ const CreatedLastUpdated = ({ recipe }: { recipe?: Recipe | null }) => {
 export const RecipeView = () => {
     const auth = useAuth();
     const { recipeId } = useParams();
-    useAuthFetch
 
-    const { data, loading, error } = useAuthFetch<Recipe>(
-        `/api/recipe/${recipeId}`,
-        "created_at",
-        "updated_at"
+    const { data, loading } = useAuthFetch<Recipe>(
+        `/api/recipe/${recipeId}`
     );
     const { recipeState, setRecipeState } = useOutletContext<OutletContextType>();
     const { addRecentRecipe } = useRecentRecipes()
@@ -94,11 +93,7 @@ export const RecipeView = () => {
         }
 
         // Dependencies: Run only when these values change
-    }, [data?.user_id, auth.user?.profile.sub, recipeState.isSharedRecipe]);
-
-
-    handleError(error)
-
+    }, [data?.user_id, auth.user?.profile.sub, recipeState, setRecipeState]);
 
     return (
         <>

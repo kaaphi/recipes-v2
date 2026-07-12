@@ -23,16 +23,7 @@ export const Login = () => {
 
 export const headerHeight = 60
 
-export const scrollToElement = (elementId: string) => {
-  //   document.getElementById(`letter_${letter}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
-  const element = document.getElementById(elementId)
-  const elementRect = element!.getBoundingClientRect();
-  const absoluteElementTop = elementRect.top + window.scrollY;
-  window.scrollTo({
-    top: absoluteElementTop - headerHeight,
-    behavior: 'instant'
-  });
-};
+
 
 export type OutletContextType = {
   userRecipes: UseUserRecipesReturnValue;

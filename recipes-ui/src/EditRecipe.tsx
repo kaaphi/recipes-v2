@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { headerHeight } from "./App";
 import { useCallback, useState } from "react";
 import { useAuthFetch, type Recipe } from "./Recipes";
-import { handleError } from "./main";
+import { useHandleError } from "./UtilityHooks";
 
 
 interface RecipeText {
@@ -12,29 +12,29 @@ interface RecipeText {
 }
 
 export interface UseSaveRecipeReturnValue {
-    saveRecipe: (text: string) => Promise<any>;
+    saveRecipe: (text: string) => Promise<unknown>;
     saving: boolean;
     error: Error | null;
 }
 
 
-const useSaveRecipe = (auth: AuthContextProps, recipeId?:string): UseSaveRecipeReturnValue => {
+const useSaveRecipe = (auth: AuthContextProps, recipeId?: string): UseSaveRecipeReturnValue => {
     const navigate = useNavigate();
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-    let url = recipeId ? `/api/recipe/edit/${recipeId}` : "/api/recipe/edit"
+    const saveRecipe = useCallback((recipeText: string): Promise<unknown> => {
+        const url = recipeId ? `/api/recipe/edit/${recipeId}` : "/api/recipe/edit"
 
-    const getRecipeId = (res:any): string => {
-        if (recipeId) {
-            return recipeId
-        } else {
-            const recipe = res as Recipe
-            return recipe.recipe_id
+        const getRecipeId = (res: unknown): string => {
+            if (recipeId) {
+                return recipeId
+            } else {
+                const recipe = res as Recipe
+                return recipe.recipe_id
+            }
         }
-    }
 
-    const saveRecipe = useCallback((recipeText: string): Promise<any> => {
         setSaving(true);
 
         return fetch(url, {
@@ -54,7 +54,7 @@ const useSaveRecipe = (auth: AuthContextProps, recipeId?:string): UseSaveRecipeR
                 return res.json();
             })
             .then((res) => {
-                let recipeId = getRecipeId(res)
+                const recipeId = getRecipeId(res)
                 setSaving(false)
                 navigate(`/recipe/${recipeId}`)
             })
@@ -63,22 +63,22 @@ const useSaveRecipe = (auth: AuthContextProps, recipeId?:string): UseSaveRecipeR
                 setError(err);
                 return err;
             });
-    }, [auth, recipeId, url])
+    }, [auth, recipeId, navigate])
 
     return { saveRecipe, saving: saving, error }
 }
 
 interface EditComponentParams {
     recipeId?: string;
-    data:RecipeText|null;
+    data: RecipeText | null;
     loading: boolean;
     auth: AuthContextProps;
 }
 
-const EditComponent = ({recipeId, data, loading, auth}:EditComponentParams) => {
+const EditComponent = ({ recipeId, data, loading, auth }: EditComponentParams) => {
     const { saveRecipe, saving, error } = useSaveRecipe(auth, recipeId)
-    
-    handleError(error)
+
+    useHandleError(error)
 
     return (
         <>
@@ -111,7 +111,7 @@ export const CreateRecipe = () => {
     const auth = useAuth();
 
     return (
-        <EditComponent data={null} loading={false} auth={auth}/>
+        <EditComponent data={null} loading={false} auth={auth} />
     )
 }
 

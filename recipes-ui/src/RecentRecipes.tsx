@@ -19,16 +19,16 @@ export type UseRecentRecipesReturnValue = {
     clearRecentRecipes: () => void;
 }
 
+const getValidItems = (currentItems: RecentRecipe[]) => {
+    const now = Date.now()
+    return currentItems.filter((item) => item.expiresAt > now)
+}
+
 export const useRecentRecipes = (): UseRecentRecipesReturnValue => {
     const auth = useAuth()
     const userId = auth.user?.profile.sub
 
     const [recentRecipes, setRecentRecipes, removeRecentRecipes] = useLocalStorage<RecentRecipe[]>({ key: `recent-recipes-${userId}`, defaultValue: [] })
-
-    const getValidItems = (currentItems: RecentRecipe[]) => {
-        const now = Date.now()
-        return currentItems.filter((item) => item.expiresAt > now)
-    }
 
     const validRecipes = useMemo(() => getValidItems(recentRecipes), [recentRecipes]);
 

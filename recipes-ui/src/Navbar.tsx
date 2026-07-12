@@ -18,9 +18,9 @@ type NavBarProps = {
 const NavItem = (props: NavBarProps) => {
     const auth = useAuth();
 
-    var { link, authCondition = "requireAuth", ...others } = props;
+    const { link, authCondition = "requireAuth", ...others } = props;
 
-    var show = true
+    let show = true
     switch (authCondition) {
         case "requireAuth":
             show = auth.isAuthenticated;

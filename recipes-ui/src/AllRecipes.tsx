@@ -1,7 +1,8 @@
 import { Anchor, Button, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
-import { scrollToElement, type OutletContextType } from "./App";
+import { type OutletContextType } from "./App";
 import { Link, useOutletContext, useParams } from "react-router";
 import { useAuthFetch, type RecipeStub, type UserRecipes, type UseUserRecipesReturnValue } from "./Recipes";
+import { scrollToElement } from "./UtilityHooks";
 
 export const AllRecipes = (props: {recipes: UseUserRecipesReturnValue}) => {
     const { data, loading } = props.recipes

@@ -1,20 +1,21 @@
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 
-import { StrictMode, useEffect } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App, { Login } from './App.tsx';
-import { AuthProvider, useAuth, type AuthProviderNoUserManagerProps } from 'react-oidc-context';
+import { AuthProvider, type AuthProviderNoUserManagerProps } from 'react-oidc-context';
 import { WebStorageStateStore, type User } from 'oidc-client-ts';
-import { BrowserRouter, Navigate, Route, Routes } from "react-router";
-import { LoadingOverlay, MantineProvider, Title } from '@mantine/core';
+import { BrowserRouter, Route, Routes } from "react-router";
+import { MantineProvider } from '@mantine/core';
 import { MyRecipes, SharedRecipes } from './AllRecipes.tsx';
 import { CreateRecipe, EditRecipe } from './EditRecipe.tsx';
-import { notifications, Notifications } from '@mantine/notifications';
-import { XIcon } from '@phosphor-icons/react';
+import { Notifications } from '@mantine/notifications';
 import { theme } from './Theme.tsx';
 import { SearchResults } from './SearchResults.tsx';
 import { RecipeView } from './Recipe.tsx';
+import { AuthWrapper } from './AuthComponents.tsx';
+import { NotFound } from './NotFound.tsx';
 
 
 const cognitoAuthConfig : AuthProviderNoUserManagerProps = {
@@ -35,62 +36,6 @@ const cognitoAuthConfig : AuthProviderNoUserManagerProps = {
     );
   }
 };
-
-const NotFound = () => {
-  return (
-    <Title>NOT FOUND!</Title>
-  )
-}
-
-type AuthWrapperProps = {
-  expectAuthenticated?: boolean,
-  children?: React.ReactNode
-}
-
-const AuthWrapper = ({expectAuthenticated=true, children} : AuthWrapperProps) => {
-  const auth = useAuth();
-
-  if (auth.error) {
-    return (<div>Authentication error... {auth.error.message}</div>);
-  }
-
-  if (!auth.isLoading) {
-    if (expectAuthenticated && !auth.isAuthenticated) {
-      console.log("Not logged in, redirecting to /login")
-      return (<Navigate to="/login" replace />);
-    }
-
-    if (!expectAuthenticated && auth.isAuthenticated) {
-      console.log("Logged in, redirecting to /")
-      return (<Navigate to="/" replace />);
-    }
-  }
-
-  return (
-    <>
-    <LoadingOverlay visible={auth.isLoading} loaderProps={{ children: 'Logging you in...' }} />
-    {children}
-    </>
-
-  );
-}
-
-export const handleError = (error: Error | null, message?: string, title?: string) => {
-  useEffect(() => {
-    if (!error) {
-      return
-    }
-
-    notifications.show({
-      title: title ? title : "Error",
-      message: message ? message : `${error}`,
-      icon: <XIcon />,
-      color: "red",
-      autoClose: false,
-      position: "top-center"
-    })
-  }, [error])
-}
 
 // wrap the application with AuthProvider
 createRoot(document.getElementById('root')!).render(

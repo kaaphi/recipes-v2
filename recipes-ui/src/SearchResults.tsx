@@ -1,4 +1,4 @@
-import { Anchor, Group, Highlight, Table, Text, Title } from "@mantine/core";
+import { Anchor, Group, Highlight, LoadingOverlay, Table, Text, Title } from "@mantine/core";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useSearchRecipes, type RecipeSearchResult } from "./Recipes";
 
@@ -48,24 +48,17 @@ const Result = ({ result, query }: ResultParams) => {
 
 export const SearchResults = () => {
     const [searchParams] = useSearchParams();
-    const query = searchParams.get("q")
+    const rawQuery = searchParams.get("q")
+    const query = rawQuery ? rawQuery : ""
     const navigate = useNavigate();
-
-    if (!query) {
-        return (
-        <>
-        <Title order={3}>Invalid search!</Title>
-        </>
-    )
-    }
-
-    const { data } = useSearchRecipes(query)
+    const { data, loading } = useSearchRecipes(query)
 
     if (data && data.length == 1 && data[0].match_type === "title") {
         navigate(`/recipe/${data[0].id}`)
     } else {
         return (
             <>
+                <LoadingOverlay visible={loading} />
                 <Title order={3}>&ldquo;{query}&rdquo;</Title>
 
                 <Table highlightOnHover verticalSpacing="sm">
