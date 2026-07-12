@@ -27,7 +27,7 @@ from app.services.search import search_recipes
 
 logger = logging.getLogger(__name__)
 
-CACHE_TTL = 18000 # 5 hours
+CACHE_TTL = 18000  # 5 hours
 
 
 class RecipeService:

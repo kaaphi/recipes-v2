@@ -74,7 +74,6 @@ def convert_legacy_recipe(
         raise e
 
 
-
 def load_legacy_from_postgres() -> list[LegacyRecipeContainer]:
     logger.info(
         f"Loading legacy data from postgres {config.postgres.host}:{config.postgres.database} and writing to {config.legacy_data_file}"

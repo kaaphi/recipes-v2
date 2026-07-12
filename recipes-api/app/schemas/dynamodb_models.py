@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Union
 
-from pydantic import BaseModel, Tag, Discriminator, computed_field, field_validator, Field
+from pydantic import BaseModel, Tag, Discriminator, computed_field, field_validator
 
 
 def dynamodb_dump_args(additional_exclude: set[str] = set()) -> dict:
@@ -61,7 +61,7 @@ class EditableRecipe(BaseRecipes):
     method: str
     sources: list[str] = []
     ingredientLists: list[IngredientList] = []
-    updated_at: datetime|None = None
+    updated_at: datetime | None = None
 
     @field_validator("sk", mode="after")
     @classmethod
@@ -73,7 +73,9 @@ class EditableRecipe(BaseRecipes):
             raise ValueError('Recipe sk must start with "r#" or "zr#"!')
         return sk
 
-    def dump_for_dynamodb_update(self, additional_exclude: set[str]|None = None) -> dict:
+    def dump_for_dynamodb_update(
+        self, additional_exclude: set[str] | None = None
+    ) -> dict:
         if additional_exclude is None:
             additional_exclude = set()
         return super().dump_for_dynamodb(

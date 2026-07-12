@@ -25,14 +25,17 @@ class DynamoDBLoader:
     def __init__(
         self,
         table_name: str = DEFAULT_TABLE_NAME,
-        config: dict|None = None,
+        config: dict | None = None,
     ):
         self.config = config if config is not None else DYNAMO_DB_LOCAL_CONFIG.copy()
         self.table_name = table_name
         self.dynamodb_resource = boto3.resource("dynamodb", **config)
         self.table = self.dynamodb_resource.Table(self.table_name)
         self.dynamodb_client = boto3.client("dynamodb", **config)
-        self.is_local = "endpoint_url" in config and config["endpoint_url"] == DYNAMO_DB_LOCAL_CONFIG["endpoint_url"]
+        self.is_local = (
+            "endpoint_url" in config
+            and config["endpoint_url"] == DYNAMO_DB_LOCAL_CONFIG["endpoint_url"]
+        )
 
     def table_exists(self):
         try:
@@ -96,7 +99,7 @@ class DynamoDBLoader:
         environment_group.add_argument("--aws", nargs="+", type=str)
 
     @staticmethod
-    def from_args(args: argparse.Namespace) -> DynamoDBLoader|None:
+    def from_args(args: argparse.Namespace) -> DynamoDBLoader | None:
         if not args.local:
             aws_config = {k: v for s in args.aws for k, v in [s.split("=", 1)]}
             db = DynamoDBLoader(table_name=args.table, config=aws_config)
@@ -110,6 +113,7 @@ class DynamoDBLoader:
             db = DynamoDBLoader(table_name=args.table, config=DYNAMO_DB_LOCAL_CONFIG)
             db.create_table()
         return db
+
 
 def main():
     parser = argparse.ArgumentParser(description="Load JSON data into DynamoDB.")
