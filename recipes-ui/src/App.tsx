@@ -5,7 +5,7 @@ import { Outlet } from 'react-router';
 import { NavBar } from './Navbar';
 import { useUserRecipes, type UseUserRecipesReturnValue } from './Recipes';
 import { useEffect, useState } from 'react';
-import CookingPotIcon from '../public/favicon.svg?react'
+import CookingPotIcon from './assets/cooking-pot.svg?react'
 import { hasAuthParams, useAuth } from 'react-oidc-context';
 
 
@@ -70,7 +70,7 @@ export const App = () => {
         padding="md"
         header={{ height: headerHeight }}
         navbar={{
-          width: 300,
+          width: 250,
           breakpoint: 'sm',
           collapsed: { mobile: !opened },
         }}
@@ -83,8 +83,8 @@ export const App = () => {
               hiddenFrom="sm"
               size="sm"
             />
-
-            <Title order={1}>Recipes</Title>
+            <CookingPotIcon height={40} width={40}/>
+            <Title order={2}>Recipes</Title>
           </Group>
         </AppShell.Header>
 

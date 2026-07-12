@@ -15,6 +15,8 @@ export interface Recipe {
     method: string;
     sources: string[];
     ingredientLists: IngredientList[];
+    created_at: Date
+    updated_at?: Date|null
 }
 
 export interface RecipeStub {
@@ -50,7 +52,7 @@ export interface RecipeSearchResult {
 export type UseUserRecipesReturnValue = UseFetchReturnValue<UserRecipes>
 export type UseSearchRecipesReturnValue = UseFetchReturnValue<RecipeSearchResult[]>
 
-export const useAuthFetch = <T,>(url: string): UseFetchReturnValue<T> => {
+export const useAuthFetch = <T extends Record<string,any>,>(url: string, ...dateAttributes: string[]): UseFetchReturnValue<T> => {
     const auth = useAuth();
 
     const rv = useFetch<T>(
@@ -71,7 +73,25 @@ export const useAuthFetch = <T,>(url: string): UseFetchReturnValue<T> => {
 
     handleError(rv.error)
 
+    if (rv.data) {
+        rv.data = handleDates(rv.data, ...dateAttributes)
+    }
+
     return rv
+}
+
+export const handleDates = <T extends Record<string,any>>(obj: T, ...dateAttributes: string[]): T => {
+    const rv = { ...obj } as any;
+    
+    dateAttributes.forEach((a) => {
+        const value = obj[a]
+        if (value) {
+            const date = new Date(value)
+            rv[a] = date as any
+        }
+    })
+
+    return rv as T
 }
 
 export const useSearchRecipes = (query: string): UseSearchRecipesReturnValue => {
