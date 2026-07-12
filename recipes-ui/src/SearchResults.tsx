@@ -1,6 +1,7 @@
 import { Anchor, Group, Highlight, LoadingOverlay, Table, Text, Title } from "@mantine/core";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useSearchRecipes, type RecipeSearchResult } from "./Recipes";
+import { useEffect } from "react";
 
 type ResultParams = {
     result: RecipeSearchResult;
@@ -53,8 +54,16 @@ export const SearchResults = () => {
     const navigate = useNavigate();
     const { data, loading } = useSearchRecipes(query)
 
-    if (data && data.length == 1 && data[0].match_type === "title") {
-        navigate(`/recipe/${data[0].id}`)
+    const shouldRedirectToRecipe = data && data.length == 1 && data[0].match_type === "title"
+
+    useEffect(() => {
+        if (shouldRedirectToRecipe) {
+            navigate(`/recipe/${data[0].id}`)
+        }
+    }, [shouldRedirectToRecipe, navigate, data])
+    
+    if (shouldRedirectToRecipe) {
+        return <LoadingOverlay visible={true} />;
     } else {
         return (
             <>
