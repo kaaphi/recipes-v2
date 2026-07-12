@@ -7,7 +7,7 @@ import uuid
 
 import psycopg2
 import psycopg2.extras
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from app.schemas.dynamodb_models import Recipe, IngredientList, User, BaseRecipes
 from dev import Config, get_default_config_path, load_migration_config
@@ -49,23 +49,30 @@ config: Config
 def convert_legacy_recipe(
     legacy: LegacyRecipeContainer, user_map: dict[int, User]
 ) -> Recipe:
-    return Recipe(
-        pk=user_map[legacy.userid].pk,
-        sk=f"{'r' if not legacy.isarchived else 'zr'}#{legacy.id}",
-        title=legacy.recipe.title,
-        method=legacy.recipe.method,
-        sources=legacy.recipe.sources,
-        ingredientLists=[
-            IngredientList(
-                name=legacy_recipe.name,
-                ingredients=[
-                    f"{i.quantity} {i.name}" if i.quantity else i.name
-                    for i in legacy_recipe.ingredients
-                ],
-            )
-            for legacy_recipe in legacy.recipe.ingredientLists
-        ],
-    )
+    try:
+        return Recipe(
+            pk=user_map[legacy.userid].pk,
+            sk=f"{'r' if not legacy.isarchived else 'zr'}#{legacy.id}",
+            title=legacy.recipe.title,
+            method=legacy.recipe.method,
+            sources=legacy.recipe.sources,
+            ingredientLists=[
+                IngredientList(
+                    name=legacy_recipe.name,
+                    ingredients=[
+                        f"{i.quantity} {i.name}" if i.quantity else i.name
+                        for i in legacy_recipe.ingredients
+                    ],
+                )
+                for legacy_recipe in legacy.recipe.ingredientLists
+            ],
+            updated_at=legacy.updatedtime,
+            created_at=legacy.createdtime,
+        )
+    except ValidationError as e:
+        logger.error(f"Cannot convert legacy recipe: {legacy}")
+        raise e
+
 
 
 def load_legacy_from_postgres() -> list[LegacyRecipeContainer]:

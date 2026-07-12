@@ -25,13 +25,14 @@ class DynamoDBLoader:
     def __init__(
         self,
         table_name: str = DEFAULT_TABLE_NAME,
-        config: dict = DYNAMO_DB_LOCAL_CONFIG,
+        config: dict|None = None,
     ):
-        self.config = config
+        self.config = config if config is not None else DYNAMO_DB_LOCAL_CONFIG.copy()
         self.table_name = table_name
         self.dynamodb_resource = boto3.resource("dynamodb", **config)
         self.table = self.dynamodb_resource.Table(self.table_name)
         self.dynamodb_client = boto3.client("dynamodb", **config)
+        self.is_local = "endpoint_url" in config and config["endpoint_url"] == DYNAMO_DB_LOCAL_CONFIG["endpoint_url"]
 
     def table_exists(self):
         try:
@@ -87,31 +88,39 @@ class DynamoDBLoader:
             table.wait_until_exists()
             logger.info(f"Table {self.table_name} created.")
 
+    @staticmethod
+    def add_arguments(parser: argparse.ArgumentParser):
+        parser.add_argument("-t", "--table", type=str, default=DEFAULT_TABLE_NAME)
+        environment_group = parser.add_mutually_exclusive_group()
+        environment_group.add_argument("--local", action="store_true")
+        environment_group.add_argument("--aws", nargs="+", type=str)
+
+    @staticmethod
+    def from_args(args: argparse.Namespace) -> DynamoDBLoader|None:
+        if not args.local:
+            aws_config = {k: v for s in args.aws for k, v in [s.split("=", 1)]}
+            db = DynamoDBLoader(table_name=args.table, config=aws_config)
+            confirm = input(
+                f"You will be writing to table {db.table_name}, type YES to confirm: "
+            )
+            if not confirm == "YES":
+                logger.warning("Canceled writing to table.")
+                return None
+        else:
+            db = DynamoDBLoader(table_name=args.table, config=DYNAMO_DB_LOCAL_CONFIG)
+            db.create_table()
+        return db
 
 def main():
     parser = argparse.ArgumentParser(description="Load JSON data into DynamoDB.")
     parser.add_argument("-c", "--config", type=str, default=get_default_config_path())
-    parser.add_argument("-t", "--table", type=str, default=DEFAULT_TABLE_NAME)
-    environment_group = parser.add_mutually_exclusive_group()
-    environment_group.add_argument("--local", action="store_true")
-    environment_group.add_argument("--aws", nargs="+", type=str)
+    DynamoDBLoader.add_arguments(parser)
     args = parser.parse_args()
     migration_config = load_migration_config(args.config)
 
     logging.basicConfig(level=logging.INFO)
 
-    if not args.local:
-        aws_config = {k: v for s in args.aws for k, v in [s.split("=", 1)]}
-        db = DynamoDBLoader(table_name=args.table, config=aws_config)
-        confirm = input(
-            f"You will be writing to table {db.table_name}, type YES to confirm: "
-        )
-        if not confirm == "YES":
-            logger.warning("Canceled writing to table.")
-            return
-    else:
-        db = DynamoDBLoader(table_name=args.table, config=DYNAMO_DB_LOCAL_CONFIG)
-        db.create_table()
+    db = DynamoDBLoader.from_args(args)
 
     if not db.table_exists():
         raise Exception(f"Table {db.table_name} does not exist!")

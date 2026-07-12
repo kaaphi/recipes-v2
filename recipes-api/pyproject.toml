@@ -22,6 +22,7 @@ dev = [
 [project.scripts]
 dynamodb_loader = "dev.dynamodb_loader:main"
 migrate_data = "dev.migrate_data:main"
+fix_bad_dates = "dev.fix_bad_dates:main"
 
 [build-system]
 requires = ["hatchling"]
