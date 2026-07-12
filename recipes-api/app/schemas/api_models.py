@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel
@@ -58,6 +59,7 @@ class PlainTextRecipe(BaseModel):
             method=self.method,
             sources=self.sources,
             ingredientLists=self.ingredientLists,
+            updated_at=datetime.now(),
         )
 
     def to_recipe(self, pk: str, sk: str) -> Recipe:
@@ -68,4 +70,6 @@ class PlainTextRecipe(BaseModel):
             method=self.method,
             sources=self.sources,
             ingredientLists=self.ingredientLists,
+            created_at=datetime.now(),
+            updated_at=None,
         )

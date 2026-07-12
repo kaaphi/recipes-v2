@@ -89,7 +89,7 @@ class DynamoDBLoader:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Migrate v1 postgres data to v2.")
+    parser = argparse.ArgumentParser(description="Load JSON data into DynamoDB.")
     parser.add_argument("-c", "--config", type=str, default=get_default_config_path())
     parser.add_argument("-t", "--table", type=str, default=DEFAULT_TABLE_NAME)
     environment_group = parser.add_mutually_exclusive_group()

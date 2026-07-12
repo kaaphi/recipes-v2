@@ -27,6 +27,8 @@ from app.services.search import search_recipes
 
 logger = logging.getLogger(__name__)
 
+CACHE_TTL = 18000 # 5 hours
+
 
 class RecipeService:
     def __init__(self, config: RecipesConfig | None = None, table=None):
@@ -42,9 +44,9 @@ class RecipeService:
                 "Recipe service requires either a dynamodb table or a config"
             )
         self._user_lock = threading.RLock()
-        self._user_cache = TTLCache(maxsize=10, ttl=18000)
+        self._user_cache = TTLCache(maxsize=10, ttl=CACHE_TTL)
         self._recipe_lock = threading.RLock()
-        self._recipe_cache = TTLCache(maxsize=1024, ttl=18000)
+        self._recipe_cache = TTLCache(maxsize=1024, ttl=CACHE_TTL)
 
     def _invalidate_user(self, user_id: str):
         if user_id.startswith("u#"):
