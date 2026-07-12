@@ -46,7 +46,7 @@ export interface RecipeSearchResult {
     title: string,
     id: string,
     match_context: string,
-    match_type: string,
+    match_type: "title" | "ingredient" | "method",
     score: number
 }
 
