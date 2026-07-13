@@ -184,6 +184,19 @@ class RecipeService:
         self._invalidate_recipe(recipe_id)
         self._invalidate_user(user_id)
 
+    def delete_recipe(self, user_id: str, recipe_id: str, is_archived: bool) -> None:
+        self._invalidate_user(user_id)
+        self._invalidate_recipe(recipe_id)
+        recipe_sk = f"r#{recipe_id}" if not is_archived else f"zr#{recipe_id}"
+        self.table.delete_item(Key={"pk": f"u#{user_id}", "sk": recipe_sk})
+        pass
+
+    def archive_recipe(self, user_id: str, recipe_id: str):
+        recipe = self.read_recipe(recipe_id)
+        recipe.sk = f"zr#{recipe_id}"
+        self.save_item(recipe)
+        self.delete_recipe(user_id, recipe_id, False)
+
 
 class ScopedRecipeService:
     def __init__(
@@ -261,3 +274,11 @@ class ScopedRecipeService:
     def edit_recipe(self, recipe_id: str, plain_text_recipe: PlainTextRecipe) -> None:
         self._check_scope(self.user_id, recipe_id, allow_shared_scope=False)
         self._service.edit_recipe(self.user_id, recipe_id, plain_text_recipe)
+
+    def archive_recipe(self, recipe_id: str) -> None:
+        self._check_scope(self.user_id, recipe_id, allow_shared_scope=False)
+        self._service.archive_recipe(self.user_id, recipe_id)
+
+    def delete_recipe(self, recipe_id: str, is_archived: bool) -> None:
+        self._check_scope(self.user_id, recipe_id, allow_shared_scope=False)
+        self._service.delete_recipe(self.user_id, recipe_id, is_archived)

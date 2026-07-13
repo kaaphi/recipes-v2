@@ -1,0 +1,27 @@
+info:
+  name: Archive or Delete Recipe
+  type: http
+  seq: 8
+
+http:
+  method: DELETE
+  url: "{{host}}/recipe/:id"
+  params:
+    - name: permanent
+      value: "true"
+      type: query
+      disabled: true
+    - name: is_archived
+      value: "true"
+      type: query
+      disabled: true
+    - name: id
+      value: 01KXBZQR4G05T2DE9JKQY1526H
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

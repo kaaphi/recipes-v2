@@ -103,3 +103,16 @@ def put_edit_recipe(
 ) -> None:
     plain_text_recipe = from_plain_text(recipe_text.recipe)
     scoped_service.edit_recipe(recipe_id, plain_text_recipe)
+
+
+@app.delete("/recipe/{recipe_id}")
+def delete_or_archive_recipe(
+    recipe_id: str,
+    permanent: bool = False,
+    is_archived: bool = False,
+    scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
+) -> None:
+    if permanent:
+        scoped_service.delete_recipe(recipe_id, is_archived)
+    else:
+        scoped_service.archive_recipe(recipe_id)
