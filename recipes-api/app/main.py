@@ -64,6 +64,8 @@ def search_recipes(
     q: str,
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
 ) -> list[RecipeSearchResult]:
+    if q == "":
+        return []
     return scoped_service.search_recipes(q)
 
 
