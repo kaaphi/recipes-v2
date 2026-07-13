@@ -14,7 +14,10 @@ from app.schemas.dynamodb_models import Recipe
 from app.schemas.plain_text_format import to_plain_text, from_plain_text
 from app.services import RecipeService, ScopedRecipeService
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 config: RecipesConfig = load_config()
