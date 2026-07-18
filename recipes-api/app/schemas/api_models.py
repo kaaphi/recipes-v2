@@ -45,6 +45,10 @@ class PlainTextWrapper(BaseModel):
     recipe: str
 
 
+class TitledPlainTextWrapper(PlainTextWrapper):
+    title: str
+
+
 class PlainTextRecipe(BaseModel):
     title: str
     method: str

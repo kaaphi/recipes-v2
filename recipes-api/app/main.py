@@ -8,6 +8,7 @@ from app.schemas.api_models import (
     PlainTextWrapper,
     RecipeSearchResult,
     SharedUserRecipes,
+    TitledPlainTextWrapper,
 )
 from app.schemas.config import load_config, RecipesConfig
 from app.schemas.dynamodb_models import Recipe
@@ -82,8 +83,9 @@ def get_recipe(
 @app.get("/recipe/edit/{recipe_id}")
 def get_edit_recipe(
     recipe_id: str, scoped_service: ScopedRecipeService = Depends(scoped_recipe_service)
-) -> PlainTextWrapper:
-    return PlainTextWrapper(recipe=to_plain_text(scoped_service.read_recipe(recipe_id)))
+) -> TitledPlainTextWrapper:
+    recipe = scoped_service.read_recipe(recipe_id)
+    return TitledPlainTextWrapper(title=recipe.title, recipe=to_plain_text(recipe))
 
 
 @app.post("/recipe/edit")
