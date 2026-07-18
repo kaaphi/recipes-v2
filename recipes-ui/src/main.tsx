@@ -26,6 +26,7 @@ const cognitoAuthConfig : AuthProviderNoUserManagerProps = {
   scope: "openid",
   // This tells the library to persist the session across browser closes
   userStore: new WebStorageStateStore({ store: window.localStorage }), 
+  automaticSilentRenew: true,
 
   onSigninCallback: (_user :  User | undefined) => {
     // Remove authentication payload from URL

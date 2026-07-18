@@ -1,19 +1,19 @@
-import { Center, Group, MantineProvider, Title } from '@mantine/core';
+import { ActionIcon, Center, Group, MantineProvider, Title } from '@mantine/core';
 import { AppShell, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { Outlet } from 'react-router';
+import { Outlet, useNavigate } from 'react-router';
 import { NavBar } from './Navbar';
 import { useUserRecipes, type UseUserRecipesReturnValue } from './Recipes';
 import { useEffect, useState } from 'react';
-import CookingPotIcon from './assets/cooking-pot.svg?react'
-import { hasAuthParams, useAuth } from 'react-oidc-context';
+import CookingPotIcon from './assets/cooking-pot.svg?react';
+import { useAuth } from 'react-oidc-context';
 
 
 export type RecipeState = {
   isSharedRecipe: boolean
 }
 
-export const Login = () => { 
+export const Login = () => {
   return (
     <Center>
       <CookingPotIcon width={128} height={128} />
@@ -22,8 +22,6 @@ export const Login = () => {
 }
 
 export const headerHeight = 60
-
-
 
 export type OutletContextType = {
   userRecipes: UseUserRecipesReturnValue;
@@ -34,20 +32,28 @@ export type OutletContextType = {
 export const App = () => {
   const [opened, { toggle, close }] = useDisclosure();
   const userRecipes = useUserRecipes()
-  const [recipeState, setRecipeState] = useState<RecipeState>({isSharedRecipe: false})
+  const [recipeState, setRecipeState] = useState<RecipeState>({ isSharedRecipe: false })
 
-    const auth = useAuth();
+  const auth = useAuth();
 
   useEffect(() => {
-    // If the library is ready, the user is unauthenticated, 
-    // and we aren't currently mid-redirect or processing an auth code callback...
-    if (!auth.isLoading && !auth.isAuthenticated && !hasAuthParams() && !auth.activeNavigator) {
-      // Direct, built-in call to silently attempt a wake-up using the stored refresh token
-      auth.signinSilent().catch(() => {
-        console.log("No valid refresh token or Cognito session found.");
-      });
+    // 1. Check if the user is loaded but the access token has expired
+    if (!auth.isLoading && !auth.isAuthenticated && auth.user && auth.user.expired) {
+      // 2. Check if a refresh token is present in the user profile
+      if (auth.user.refresh_token) {
+        console.log("Access token expired, but refresh token found. Renewing...");
+        auth.signinSilent().catch((err) => {
+          console.error("Silent renew failed, forcing login:", err);
+          auth.signinRedirect();
+        });
+      } else {
+        // No refresh token available, session is truly dead
+        auth.signinRedirect();
+      }
     }
-  }, [auth.isLoading, auth.isAuthenticated, auth.activeNavigator, auth]);
+  }, [auth]);
+
+  const navigate = useNavigate()
 
   const context = {
     userRecipes,
@@ -74,14 +80,16 @@ export const App = () => {
               hiddenFrom="sm"
               size="sm"
             />
-            <CookingPotIcon height={40} width={40}/>
+            <ActionIcon size={headerHeight - 5} variant='white' color='dark' onClick={() => navigate("/")}>
+              <CookingPotIcon style={{ width: '70%', height: '70%' }} />
+            </ActionIcon>
             <Title order={2}>Recipes</Title>
           </Group>
         </AppShell.Header>
 
         <AppShell.Navbar><NavBar closeNavBar={close} context={context} /></AppShell.Navbar>
 
-        <AppShell.Main><Outlet context={context}/></AppShell.Main>
+        <AppShell.Main><Outlet context={context} /></AppShell.Main>
       </AppShell>
     </MantineProvider>
   );

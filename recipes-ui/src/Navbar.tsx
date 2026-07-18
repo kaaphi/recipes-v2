@@ -1,11 +1,12 @@
 import { AppShell, Autocomplete, CloseButton, Highlight, NavLink, Stack, type AutocompleteProps, type ComboboxItem, type NavLinkProps, type OptionsFilter } from "@mantine/core";
-import { BookBookmarkIcon, BookOpenTextIcon, HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon, UserListIcon } from "@phosphor-icons/react";
+import { BookBookmarkIcon, BookOpenTextIcon, BugIcon, HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon, UserListIcon } from "@phosphor-icons/react";
 import { useAuth } from "react-oidc-context";
 import { NavLink as RouterNavLink, useNavigate, useParams } from 'react-router';
 import type { User } from "./Recipes";
 import { useCallback, useRef, useState } from "react";
 import type { OutletContextType } from "./App";
 import { useRecentRecipes } from "./RecentRecipes";
+import { expireAccessToken } from "./DevOnlyUtilities";
 
 const NAV_ICON_SIZE = 24
 
@@ -177,6 +178,15 @@ const RecentRecipes = ({closeNavBar}: RecentRecipesParams) => {
     )
 }
 
+const DevActions = () => {
+    return <NavItem label="Development Options" href="#required-for-focus" leftSection={<BugIcon size={NAV_ICON_SIZE} />}>
+        <NavItem label="Expire access token" onClick={() => {
+                        expireAccessToken()
+                    }} />
+    </NavItem>
+
+}
+
 export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
     const auth = useAuth();
     const { recipeId } = useParams();
@@ -202,11 +212,12 @@ export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
             </AppShell.Section>
 
             <AppShell.Section>
+                {import.meta.env.DEV && <DevActions />}
                 <NavItem label={auth.user?.profile.email} href="#required-for-focus" leftSection={<UserIcon size={NAV_ICON_SIZE} />}>
                     <NavItem label="Sign out" leftSection={<SignOutIcon size={NAV_ICON_SIZE} />} onClick={() => {
                         closeNavBar();
                         signOutRedirect();
-                    }} />
+                    }} />                    
                 </NavItem>
             </AppShell.Section>
         </>
