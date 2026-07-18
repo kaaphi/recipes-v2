@@ -2,7 +2,7 @@ import { AppShell, Autocomplete, CloseButton, Highlight, NavLink, Stack, type Au
 import { BookBookmarkIcon, BookOpenTextIcon, BugIcon, HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon, UserListIcon } from "@phosphor-icons/react";
 import { useAuth } from "react-oidc-context";
 import { NavLink as RouterNavLink, useNavigate, useParams } from 'react-router';
-import type { User } from "./Recipes";
+import { useUserRecipes, type User } from "./Recipes";
 import { useCallback, useRef, useState } from "react";
 import type { OutletContextType } from "./App";
 import { useRecentRecipes } from "./RecentRecipes";
@@ -60,16 +60,19 @@ type NavBarParams = {
     closeNavBar: () => void;
     context: OutletContextType;
 }
-type SearchBarParams = NavBarParams
+type SearchBarParams = {
+    closeNavBar: () => void;
+}
 
-const SearchBar = ({ context, closeNavBar }: SearchBarParams) => {
+const SearchBar = ({ closeNavBar }: SearchBarParams) => {
     const auth = useAuth();
     const [value, setValue] = useState('');
     const navigate = useNavigate();
     const formRef = useRef<HTMLFormElement>(null);
+    const userRecipes = useUserRecipes();
 
     if (auth.isAuthenticated) {
-        const recipeTitles = [... new Set(context.userRecipes.data?.recipes?.map(r => r.title))]
+        const recipeTitles = [... new Set(userRecipes.data?.recipes?.map(r => r.title))]
 
         const renderOption: AutocompleteProps['renderOption'] = ({ option }) => (
             <Highlight
@@ -190,6 +193,7 @@ const DevActions = () => {
 export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
     const auth = useAuth();
     const { recipeId } = useParams();
+    const userRecipes = useUserRecipes();
 
     const signOutRedirect = () => {
         auth.removeUser();
@@ -203,12 +207,12 @@ export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
         <>
             <AppShell.Section grow>
                 <NavItem label="Home" leftSection={<HouseIcon size={NAV_ICON_SIZE} />} link={auth.isAuthenticated ? "/" : "/login"} onClick={closeNavBar} authCondition="always" />
-                <OtherRecipes user={context.userRecipes.data?.user} closeNavBar={closeNavBar}/>
+                <OtherRecipes user={userRecipes.data?.user} closeNavBar={closeNavBar}/>
                 <RecentRecipes closeNavBar={closeNavBar}/>
                 <NavItem label="New Recipe" leftSection={<PlusIcon size={NAV_ICON_SIZE} />} link="/new" onClick={closeNavBar} />
                 <NavItem label="Edit Recipe" leftSection={<PencilSimpleIcon size={NAV_ICON_SIZE} />} link={`/recipe/${recipeId}/edit`} onClick={closeNavBar} disabled={!recipeId || context.recipeState.isSharedRecipe} />
                 <NavItem label="Sign in" leftSection={<SignInIcon size={NAV_ICON_SIZE} />} onClick={() => auth.signinRedirect()} authCondition="requireNoAuth" />
-                <SearchBar context={context} closeNavBar={closeNavBar} />
+                <SearchBar closeNavBar={closeNavBar} />
             </AppShell.Section>
 
             <AppShell.Section>

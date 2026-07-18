@@ -3,8 +3,8 @@ import { AppShell, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Outlet, useNavigate } from 'react-router';
 import { NavBar } from './Navbar';
-import { useUserRecipes, type UseUserRecipesReturnValue } from './Recipes';
-import { useEffect, useState } from 'react';
+import { RecipeContext, useAuthFetch, type UserRecipes } from './Recipes';
+import { useEffect, useState, type ReactNode } from 'react';
 import CookingPotIcon from './assets/cooking-pot.svg?react';
 import { useAuth } from 'react-oidc-context';
 
@@ -24,14 +24,22 @@ export const Login = () => {
 export const headerHeight = 60
 
 export type OutletContextType = {
-  userRecipes: UseUserRecipesReturnValue;
   recipeState: RecipeState;
   setRecipeState: React.Dispatch<React.SetStateAction<RecipeState>>;
 }
 
+export const RecipeProvider = ({ children }: { children: ReactNode }) => {
+    const recipes = useAuthFetch<UserRecipes>("/api/user/recipes")
+
+    return (
+        <RecipeContext.Provider value={recipes}>
+            {children}
+        </RecipeContext.Provider>
+    );
+}
+
 export const App = () => {
   const [opened, { toggle, close }] = useDisclosure();
-  const userRecipes = useUserRecipes()
   const [recipeState, setRecipeState] = useState<RecipeState>({ isSharedRecipe: false })
 
   const auth = useAuth();
@@ -56,13 +64,13 @@ export const App = () => {
   const navigate = useNavigate()
 
   const context = {
-    userRecipes,
     recipeState,
     setRecipeState
   }
 
   return (
     <MantineProvider>
+      <RecipeProvider>
       <AppShell
         padding="md"
         header={{ height: headerHeight }}
@@ -91,8 +99,11 @@ export const App = () => {
 
         <AppShell.Main><Outlet context={context} /></AppShell.Main>
       </AppShell>
+      </RecipeProvider>
     </MantineProvider>
   );
 }
+
+
 
 export default App

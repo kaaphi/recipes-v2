@@ -1,7 +1,6 @@
 import { Anchor, Button, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
-import { type OutletContextType } from "./App";
-import { Link, useOutletContext, useParams } from "react-router";
-import { useAuthFetch, type RecipeStub, type UserRecipes, type UseUserRecipesReturnValue } from "./Recipes";
+import { Link, useParams } from "react-router";
+import { useAuthFetch, useUserRecipes, type RecipeStub, type UserRecipes, type UseUserRecipesReturnValue } from "./Recipes";
 import { scrollToElement } from "./UtilityHooks";
 
 export const AllRecipes = (props: {recipes: UseUserRecipesReturnValue}) => {
@@ -59,7 +58,7 @@ export const SharedRecipes = () => {
 }
 
 export const MyRecipes = () => {
-    const { userRecipes } = useOutletContext<OutletContextType>();
+    const userRecipes = useUserRecipes()
 
     return <AllRecipes recipes={userRecipes}/>
 }

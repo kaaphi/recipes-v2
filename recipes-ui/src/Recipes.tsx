@@ -1,6 +1,6 @@
 import { useFetch, type UseFetchReturnValue } from "@mantine/hooks";
 import { useAuth } from "react-oidc-context";
-import { useEffect } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { notifications } from "@mantine/notifications";
 import { XIcon } from "@phosphor-icons/react";
 
@@ -114,6 +114,12 @@ export const useSearchRecipes = (query: string): UseSearchRecipesReturnValue => 
     return useAuthFetch(`/api/user/recipes/search?${params.toString()}`)
 }
 
-export const useUserRecipes = (): UseUserRecipesReturnValue => {
-    return useAuthFetch("/api/user/recipes")
-}
+export const RecipeContext = createContext<UseUserRecipesReturnValue|null>(null);
+
+export const useUserRecipes = () => {
+  const context = useContext(RecipeContext);
+  if (!context) {
+    throw new Error('useUserRecipes must be used within a RecipeProvider');
+  }
+  return context;
+};

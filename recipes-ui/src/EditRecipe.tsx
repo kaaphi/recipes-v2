@@ -3,7 +3,7 @@ import { useAuth } from "react-oidc-context";
 import { Link, useNavigate, useParams } from "react-router";
 import { headerHeight } from "./App";
 import { useCallback, useState } from "react";
-import { useAuthFetch, type Recipe } from "./Recipes";
+import { useAuthFetch, useUserRecipes, type Recipe } from "./Recipes";
 import { useHandleError } from "./UtilityHooks";
 import { InfoIcon, WarningIcon } from "@phosphor-icons/react";
 import { useDisclosure } from "@mantine/hooks";
@@ -23,7 +23,8 @@ type UseDeleteRecipeReturnValue = {
 const useDeleteRecipe = (recipeId: string, isPermanent: boolean, onSuccess: () => void): UseDeleteRecipeReturnValue => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const auth = useAuth()
+    const auth = useAuth();
+    const userRecipes = useUserRecipes();
 
     const deleteRecipe = useCallback((): Promise<unknown> => {
         const url = `/api/recipe/${recipeId}?permanent=${isPermanent}`
@@ -44,15 +45,16 @@ const useDeleteRecipe = (recipeId: string, isPermanent: boolean, onSuccess: () =
                 return res.json();
             })
             .then(() => {
-                setSaving(false)
-                onSuccess()
+                userRecipes.refetch();
+                setSaving(false);
+                onSuccess();
             })
             .catch((err) => {
                 setSaving(false);
                 setError(err);
                 return err;
             });
-    }, [auth, recipeId, isPermanent, onSuccess])
+    }, [auth, recipeId, isPermanent, onSuccess, userRecipes])
 
     return { deleteRecipe, saving: saving, error }
 }
@@ -68,6 +70,7 @@ const useSaveRecipe = (recipeId?: string): UseSaveRecipeReturnValue => {
     const navigate = useNavigate();
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+    const userRecipes = useUserRecipes()
 
     const saveRecipe = useCallback((recipeText: string): Promise<unknown> => {
         const url = recipeId ? `/api/recipe/edit/${recipeId}` : "/api/recipe/edit"
@@ -100,16 +103,20 @@ const useSaveRecipe = (recipeId?: string): UseSaveRecipeReturnValue => {
                 return res.json();
             })
             .then((res) => {
-                const recipeId = getRecipeId(res)
+                if(!recipeId) {
+                    console.log("Refetching user recipes!")
+                    userRecipes.refetch()
+                }
+                const resultRecipeId = getRecipeId(res)
                 setSaving(false)
-                navigate(`/recipe/${recipeId}`)
+                navigate(`/recipe/${resultRecipeId}`)
             })
             .catch((err) => {
                 setSaving(false);
                 setError(err);
                 return err;
             });
-    }, [auth, recipeId, navigate])
+    }, [auth, recipeId, navigate, userRecipes])
 
     return { saveRecipe, saving: saving, error }
 }
