@@ -152,7 +152,7 @@ class RecipeService:
     def read_recipe(self, recipe_id) -> Recipe | None:
         logger.info(f"Reading recipe for recipe id {recipe_id}")
         response = self.table.query(
-            IndexName="RecipeId", KeyConditionExpression=Key("recipe_id").eq(recipe_id)
+            IndexName="RecipesIndex", KeyConditionExpression=Key("recipe_id").eq(recipe_id)
         )
         items = response.get("Items", [])
         if len(items) == 0:

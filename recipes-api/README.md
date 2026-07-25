@@ -14,22 +14,30 @@ table_name = "Recipes"
 
 ## DynamoDB Local
 
-Start:
+### Start:
 ```shell
 docker compose -f dynamodb-local-docker-compose.yml up -d
-uv run dynamodb_local
 ```
 
-Stop:
+### Create table and load data:
+You will need a `migrate_config.toml` in [dev](dev) that points to a valid json file with migrated data.
+See [migrate data](MIGRATE_DATA.md) for more details about the format of that file and how to migrate old data to get
+a valid JSON file.
+```shell
+uv run dynamodb_loader --local
+```
+
+### Stop:
 ```shell
 docker compose -p dynamodb-local down 
 ```
 
-Delete data (must be stopped):
+### Delete data (must be stopped):
+Bash:
 ```bash
 rm -rf docker/dynamodb
 ```
-
+PowerShell:
 ```powershell
 rmdir -Recurse .\docker\dynamodb\
 ```

@@ -75,7 +75,7 @@ class DynamoDBLoader:
                 ],
                 GlobalSecondaryIndexes=[
                     {
-                        "IndexName": "RecipeId",
+                        "IndexName": "RecipesIndex",
                         "KeySchema": [
                             {"AttributeName": "recipe_id", "KeyType": "HASH"},
                         ],
