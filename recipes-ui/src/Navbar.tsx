@@ -1,5 +1,5 @@
 import { AppShell, Autocomplete, CloseButton, Highlight, NavLink, Stack, type AutocompleteProps, type ComboboxItem, type NavLinkProps, type OptionsFilter } from "@mantine/core";
-import { BookBookmarkIcon, BookOpenTextIcon, BugIcon, HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon, UserListIcon } from "@phosphor-icons/react";
+import { ArchiveIcon, BookBookmarkIcon, BookOpenTextIcon, BugIcon, HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon, UserListIcon } from "@phosphor-icons/react";
 import { useAuth } from "react-oidc-context";
 import { NavLink as RouterNavLink, useNavigate, useParams } from 'react-router';
 import { useUserRecipes, type User } from "./Recipes";
@@ -147,13 +147,12 @@ type OtherRecipesParams = {
 }
 
 const OtherRecipes = ({ user, closeNavBar }: OtherRecipesParams) => {
-    if (user?.users_shared) {
-        return (
-            <NavItem label="Other Recipes" href="#required-for-focus" leftSection={<BookOpenTextIcon size={NAV_ICON_SIZE} />}>
-                {user.users_shared.map((user) => <NavItem onClick={closeNavBar} key={user.id} leftSection={<UserListIcon size={NAV_ICON_SIZE}/>} label={user.display_name} link={`/shared/${user.id}`}/>)}
-            </NavItem>
-        )
-    }
+    return (
+        <NavItem label="Other Recipes" href="#required-for-focus" leftSection={<BookOpenTextIcon size={NAV_ICON_SIZE} />}>
+            {user?.users_shared?.map((user) => <NavItem onClick={closeNavBar} key={user.id} leftSection={<UserListIcon size={NAV_ICON_SIZE} />} label={user.display_name} link={`/shared/${user.id}`} />)}
+            <NavItem onClick={closeNavBar} leftSection={<ArchiveIcon size={NAV_ICON_SIZE} />} label="Archived" link="/archive" />
+        </NavItem>
+    )
 }
 
 type RecentRecipesParams = {

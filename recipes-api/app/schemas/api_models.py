@@ -39,6 +39,7 @@ class SharedUserRecipes(BaseModel):
 class UserRecipes(BaseModel):
     user: User
     recipes: list[RecipeStub]
+    is_archive: bool = False
 
 
 class PlainTextWrapper(BaseModel):
@@ -47,6 +48,11 @@ class PlainTextWrapper(BaseModel):
 
 class TitledPlainTextWrapper(PlainTextWrapper):
     title: str
+    is_archived: bool
+
+
+class RecipeUpdate(BaseModel):
+    is_archived: bool
 
 
 class PlainTextRecipe(BaseModel):

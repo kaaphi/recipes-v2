@@ -21,7 +21,7 @@ export const AllRecipes = (props: {recipes: UseUserRecipesReturnValue}) => {
         <>
             <LoadingOverlay visible={loading || !data} />
             <Stack>
-            <Title id="title_top" order={1}>Recipes for {data?.user.display_name}</Title>
+            <Title id="title_top" order={1}>{data?.is_archive ? "Archived recipes" : "Recipes"} for {data?.user.display_name}</Title>
             <div>
             <Group>
                 {Object.keys(grouped).map((letter) => <Button onClick={() => scrollToLetter(letter)} key={letter} variant="outline" size="xs">{letter}</Button>)}
@@ -56,6 +56,13 @@ export const SharedRecipes = () => {
 
     return <AllRecipes recipes={recipes}/>
 }
+
+export const ArchivedRecipes = () => {
+    const archiveRecipes = useAuthFetch<UserRecipes>("/api/user/archive")
+
+    return <AllRecipes recipes={archiveRecipes}/>
+}
+
 
 export const MyRecipes = () => {
     const userRecipes = useUserRecipes()

@@ -18,6 +18,21 @@ export interface Recipe extends Record<string, unknown> {
     ingredientLists: IngredientList[];
     created_at: string
     updated_at?: string | null
+    is_archived: boolean
+}
+
+export interface RecipeTextResponse {
+    title: string
+    recipe: string
+    is_archived: boolean
+}
+
+export interface RecipeTextRequest {
+    recipe: string
+}
+
+export interface RecipeUpdate {
+    is_archived: boolean
 }
 
 export interface RecipeStub {
@@ -40,6 +55,7 @@ export interface User {
 export interface UserRecipes {
     user: User,
     recipes: RecipeStub[]
+    is_archive: boolean
 }
 
 export interface RecipeSearchResult {

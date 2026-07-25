@@ -8,7 +8,7 @@ import { AuthProvider, type AuthProviderNoUserManagerProps } from 'react-oidc-co
 import { WebStorageStateStore, type User } from 'oidc-client-ts';
 import { BrowserRouter, Route, Routes } from "react-router";
 import { MantineProvider } from '@mantine/core';
-import { MyRecipes, SharedRecipes } from './AllRecipes.tsx';
+import { ArchivedRecipes, MyRecipes, SharedRecipes } from './AllRecipes.tsx';
 import { CreateRecipe, EditRecipe } from './EditRecipe.tsx';
 import { Notifications } from '@mantine/notifications';
 import { theme } from './Theme.tsx';
@@ -49,6 +49,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/" element={<App />}>
               <Route index element={<AuthWrapper><MyRecipes /></AuthWrapper>} />
               <Route path="/oidc_callback/*" element={<AuthWrapper expectAuthenticated={false} />} />
+              <Route path="/archive" element={<AuthWrapper><ArchivedRecipes /></AuthWrapper>} />
               <Route path="/shared/:userId" element={<AuthWrapper><SharedRecipes /></AuthWrapper>} />
               <Route path="/recipe/:recipeId" element={<AuthWrapper><RecipeView /></AuthWrapper>} />
               <Route path="/search" element={<AuthWrapper><SearchResults /></AuthWrapper>} />

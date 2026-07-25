@@ -99,7 +99,7 @@ export const RecipeView = () => {
         <>
             <LoadingOverlay visible={loading} />
             <Stack>
-                <Title order={1}>{data?.title}</Title>
+                <Title order={1}>{data?.title}{data?.is_archived && " (archived)"}</Title>
                 <Title order={3}>Ingredients</Title>
                 {data?.ingredientLists.map((list, i) => <Ingredients key={`ingredients-${i}`} list={list} />)}
                 <Title order={3}>Method</Title>

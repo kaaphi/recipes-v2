@@ -1,24 +1,27 @@
 info:
-  name: Archive or Delete Recipe
+  name: Put Recipe
   type: http
-  seq: 8
+  seq: 10
 
 http:
-  method: DELETE
+  method: PUT
   url: "{{host}}/recipe/:id"
   params:
-    - name: permanent
-      value: "true"
-      type: query
-      disabled: true
-    - name: is_archived
-      value: "true"
-      type: query
-      disabled: true
     - name: id
       value: 01KXBZQR4G05T2DE9JKQY1526H
       type: path
+  body:
+    type: json
+    data: |-
+      {
+        "is_archived": {{is_archived}}
+      }
   auth: inherit
+
+runtime:
+  variables:
+    - name: is_archived
+      value: "true"
 
 settings:
   encodeUrl: true

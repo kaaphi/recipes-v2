@@ -9,6 +9,7 @@ from app.schemas.api_models import (
     RecipeSearchResult,
     SharedUserRecipes,
     TitledPlainTextWrapper,
+    RecipeUpdate,
 )
 from app.schemas.config import load_config, RecipesConfig
 from app.schemas.dynamodb_models import Recipe
@@ -55,6 +56,13 @@ def get_recipes(
     return scoped_service.query_user()
 
 
+@app.get("/user/archive")
+def get_archive_recipes(
+    scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
+) -> UserRecipes:
+    return scoped_service.query_archive()
+
+
 @app.get("/shared/{user_id}/recipes")
 def get_shared_recipes(
     user_id: str,
@@ -80,12 +88,23 @@ def get_recipe(
     return scoped_service.read_recipe(recipe_id)
 
 
+@app.put("/recipe/{recipe_id}")
+def put_recipe(
+    recipe_id: str,
+    recipe_update: RecipeUpdate,
+    scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
+) -> None:
+    scoped_service.update_recipe(recipe_id, recipe_update)
+
+
 @app.get("/recipe/edit/{recipe_id}")
 def get_edit_recipe(
     recipe_id: str, scoped_service: ScopedRecipeService = Depends(scoped_recipe_service)
 ) -> TitledPlainTextWrapper:
     recipe = scoped_service.read_recipe(recipe_id)
-    return TitledPlainTextWrapper(title=recipe.title, recipe=to_plain_text(recipe))
+    return TitledPlainTextWrapper(
+        title=recipe.title, recipe=to_plain_text(recipe), is_archived=recipe.is_archived
+    )
 
 
 @app.post("/recipe/edit")
@@ -108,13 +127,9 @@ def put_edit_recipe(
 
 
 @app.delete("/recipe/{recipe_id}")
-def delete_or_archive_recipe(
+def delete_recipe(
     recipe_id: str,
-    permanent: bool = False,
     is_archived: bool = False,
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
 ) -> None:
-    if permanent:
-        scoped_service.delete_recipe(recipe_id, is_archived)
-    else:
-        scoped_service.archive_recipe(recipe_id)
+    scoped_service.delete_recipe(recipe_id, is_archived)
