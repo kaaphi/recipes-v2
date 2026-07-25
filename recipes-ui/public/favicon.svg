@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000" id="Capa_1" width="800px" height="800px" viewBox="0 0 191.212 191.211" xml:space="preserve"><metadata><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Description><dc:creator>RealFaviconGenerator</dc:creator><dc:source>https://realfavicongenerator.net</dc:source></rdf:Description></rdf:RDF></metadata><g>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" fill="currentColor" id="Capa_1" width="800px" height="800px" viewBox="0 0 191.212 191.211" xml:space="preserve"><metadata><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Description><dc:creator>RealFaviconGenerator</dc:creator><dc:source>https://realfavicongenerator.net</dc:source></rdf:Description></rdf:RDF></metadata><g>
 	<path d="M191.004,99.473c-1.195-10.374-7.35-18.387-17.085-19.938c-0.463-4.166-1.129-8.264-2.16-12.157
 		c0.303-0.019,0.608-0.024,0.911-0.044c2.778-0.179,4.07-2.311,3.951-4.369c1.608-0.152,3.117-1.238,3.155-3.346
 		c0.054-2.985,0.107-5.971,0.159-8.956c0.029-1.626-1.145-3.132-2.704-3.551c-6.416-1.722-29.696-4.023-56.883-5.111
@@ -20,6 +20,4 @@
 		c23.92,0.92,48.374,2.627,72.412,1.856C166.495,92.859,167.65,120.243,163.843,145.151z M176.312,116.775
 		c-0.552,0.114-1.002,0.312-1.381,0.557c-0.019-2.471-0.04-4.93-0.05-7.354c-0.033-7.84,0.114-16.597-0.486-25.24
 		c5.493,3.142,8.622,9.669,9.341,16.077C184.403,106.774,183.2,115.355,176.312,116.775z"></path>
-</g><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
-@media (prefers-color-scheme: dark) { :root { filter: invert(100%); } }
-</style></svg>
+</g></svg>
