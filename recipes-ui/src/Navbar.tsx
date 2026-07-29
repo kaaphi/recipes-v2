@@ -69,6 +69,7 @@ const SearchBar = ({ closeNavBar }: SearchBarParams) => {
     const [value, setValue] = useState('');
     const navigate = useNavigate();
     const formRef = useRef<HTMLFormElement>(null);
+    const searchBoxRef = useRef<HTMLInputElement>(null);
     const userRecipes = useUserRecipes();
 
     if (auth.isAuthenticated) {
@@ -124,6 +125,8 @@ const SearchBar = ({ closeNavBar }: SearchBarParams) => {
                 });
             }
             closeNavBar()
+            //remove focus so keyboard goes away on mobile
+            searchBoxRef.current?.blur();
         }
 
         const onOptionSubmit = (option: string) => {
@@ -134,7 +137,7 @@ const SearchBar = ({ closeNavBar }: SearchBarParams) => {
         return (
             <Stack style={{ marginInline: "var(--mantine-spacing-xs)" }}>
                 <form ref={formRef} onSubmit={(event) => handleSubmit(event)}>
-                    <Autocomplete placeholder="Search" leftSection={<MagnifyingGlassIcon size={NAV_ICON_SIZE} />} name="search-box" data={recipeTitles} value={value} onChange={setValue} renderOption={renderOption} filter={optionsFilter} type="search" onOptionSubmit={onOptionSubmit} clearable/>
+                    <Autocomplete ref={searchBoxRef} placeholder="Search" leftSection={<MagnifyingGlassIcon size={NAV_ICON_SIZE} />} name="search-box" data={recipeTitles} value={value} onChange={setValue} renderOption={renderOption} filter={optionsFilter} type="search" onOptionSubmit={onOptionSubmit} clearable/>
                 </form>
             </Stack>
         )
