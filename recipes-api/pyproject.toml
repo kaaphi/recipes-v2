@@ -5,11 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "authlib>=1.7.2",
     "boto3>=1.43.14",
     "boto3-stubs~=1.43.14",
     "cachetools>=7.1.4",
+    "diskcache>=5.6.3",
     "fastapi-cognito>=2.9.0",
     "fastapi[standard]>=0.136.3",
+    "httpx>=0.28.1",
+    "itsdangerous>=2.2.0",
+    "joserfc>=1.7.4",
     "python-ulid>=3.1.0",
 ]
 [dependency-groups]

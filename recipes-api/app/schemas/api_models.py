@@ -4,11 +4,11 @@ from enum import Enum
 from pydantic import BaseModel
 
 from app.schemas.dynamodb_models import (
-    User,
-    IngredientList,
     EditableRecipe,
+    IngredientList,
     Recipe,
     SharedUser,
+    User,
 )
 
 

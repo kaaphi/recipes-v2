@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Attr
 from pydantic import TypeAdapter
 
 from app.schemas.dynamodb_models import DynamoDbItem, Recipe
-from dev import get_default_config_path, load_migration_config, Config
+from dev import Config, get_default_config_path, load_migration_config
 from dev.dynamodb_loader import DynamoDBLoader
 
 logging.basicConfig(

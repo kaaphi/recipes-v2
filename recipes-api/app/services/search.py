@@ -1,4 +1,4 @@
-from app.schemas.api_models import RecipeSearchResult, RecipeSearchMatchType
+from app.schemas.api_models import RecipeSearchMatchType, RecipeSearchResult
 from app.schemas.dynamodb_models import Recipe
 
 CONTEXT_RADIUS: int = 10

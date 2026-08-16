@@ -1,28 +1,30 @@
 import logging
 import threading
-from typing import Callable
+from collections.abc import Callable
 
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Attr, Key
 from cachetools import TTLCache, cachedmethod
 from pydantic import TypeAdapter
 from ulid import ULID
 
 from app.schemas.api_models import (
-    UserRecipes,
-    RecipeStub,
     PlainTextRecipe,
     RecipeSearchResult,
-    SharedUserRecipes,
+    RecipeStub,
     RecipeUpdate,
+    SharedUserRecipes,
+    UserRecipes,
 )
 from app.schemas.config import RecipesConfig
 from app.schemas.dynamodb_models import (
-    Recipe as Recipe,
     BaseRecipes,
     DynamoDbItem,
-    User,
     SharedUser,
+    User,
+)
+from app.schemas.dynamodb_models import (
+    Recipe as Recipe,
 )
 from app.services.search import search_recipes
 
@@ -50,8 +52,7 @@ class RecipeService:
         self._recipe_cache = TTLCache(maxsize=1024, ttl=CACHE_TTL)
 
     def _invalidate_user(self, user_id: str):
-        if user_id.startswith("u#"):
-            user_id = user_id[2:]
+        user_id = user_id.removeprefix("u#")
         key = self._query_user.cache_key(user_id)
         with self._query_user.cache_lock:
             self._query_user.cache.pop(key, None)
@@ -152,7 +153,8 @@ class RecipeService:
     def read_recipe(self, recipe_id) -> Recipe | None:
         logger.info(f"Reading recipe for recipe id {recipe_id}")
         response = self.table.query(
-            IndexName="RecipesIndex", KeyConditionExpression=Key("recipe_id").eq(recipe_id)
+            IndexName="RecipesIndex",
+            KeyConditionExpression=Key("recipe_id").eq(recipe_id),
         )
         items = response.get("Items", [])
         if len(items) == 0:
@@ -210,7 +212,6 @@ class RecipeService:
         self._invalidate_recipe(recipe_id)
         recipe_sk = f"r#{recipe_id}" if not is_archived else f"zr#{recipe_id}"
         self.table.delete_item(Key={"pk": f"u#{user_id}", "sk": recipe_sk})
-        pass
 
     def update_recipe(self, user_id: str, recipe_id: str, recipe_update: RecipeUpdate):
         recipe = self.read_recipe(recipe_id)
