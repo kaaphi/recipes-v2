@@ -4,16 +4,19 @@ import time
 from collections.abc import Callable
 
 import httpx
-from authlib.integrations.starlette_client import OAuth
+from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from diskcache import Cache
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, ValidationError
 from starlette import status
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import RedirectResponse
 
 from app.schemas.config import RecipesCognitoSettings
 
 USER_SESSION_COOKIE = "user_session_id"
+SESSION_COOKIE_MAX_AGE = 14 * 24 * 60 * 60  # 14 days
+SESSION_CACHE_EXPIRY_BUFFER_SECONDS = 30
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +24,21 @@ logger = logging.getLogger(__name__)
 class SessionData(BaseModel):
     access_token: str
     refresh_token: str
-    expires_at: float
+    access_token_expires_at: float
+    """Access token expiration datetime"""
+    session_expires_at: float
+    """Session expiration datetime"""
+
+    def needs_refresh(self) -> bool:
+        """
+        Refresh session_expires_at if current expiry time is less than half the SESSION_COOKIE_MAX_AGE
+        :return: True of the session_expires_at was updated, False otherwise
+        """
+        if self.session_expires_at < (time.time() + (SESSION_COOKIE_MAX_AGE / 2)):
+            self.session_expires_at = time.time() + SESSION_COOKIE_MAX_AGE
+            return True
+        else:
+            return False
 
 
 class SessionCache:
@@ -41,8 +58,20 @@ class SessionCache:
             self.delete(session_id)
             return None
 
-    def set(self, session_id: str, session_data: SessionData, expire: float):
-        self.cache.set(session_id, session_data.model_dump_json(), expire=expire)
+    def set(self, session_id: str, session_data: SessionData):
+        """
+        Set the session data for a session_id
+        :param session_id: the session id
+        :param session_data: the session data
+        """
+        # we add a buffer to the expiry to account for minor expiry differences between the cookie in the browser and the cache
+        expire = (
+            session_data.session_expires_at - time.time()
+        ) + SESSION_CACHE_EXPIRY_BUFFER_SECONDS
+        if expire < 0:
+            logger.error("Session is already expired: %s", session_id)
+        else:
+            self.cache.set(session_id, session_data.model_dump_json(), expire=expire)
 
     def delete(self, session_id: str):
         self.cache.delete(session_id)
@@ -51,8 +80,8 @@ class SessionCache:
 class BffAuth:
     def __init__(self, config: RecipesCognitoSettings, session_cache_dir: str):
         self.config = config
-        self.oauth = OAuth()
-        self.oauth.register(
+        oauth = OAuth()
+        oauth.register(
             name="cognito",
             authority=config.authority,
             client_id=config.client_id,
@@ -60,15 +89,39 @@ class BffAuth:
             server_metadata_url=f"{config.authority}/.well-known/openid-configuration",
             client_kwargs={"scope": "openid"},
         )
+
+        self.cognito: StarletteOAuth2App = oauth.cognito
+
         self.session_cache = SessionCache(cache_dir=session_cache_dir)
 
-    async def login(self, request: Request):
+    async def login(self, request: Request) -> Response:
         """
         Redirects the user to AWS Cognito's Hosted UI to begin the authentication flow.
         """
-        return await self.oauth.cognito.authorize_redirect(
-            request, self.config.redirect_uri
-        )
+        return await self.cognito.authorize_redirect(request, self.config.redirect_uri)
+
+    async def logout(
+        self,
+        request: Request,
+        logout_cognito: bool = False,
+        logout_redirect_uri: str | None = None,
+    ) -> Response | dict:
+        """
+        Logs out the user
+        :param request: the request
+        :param logout_cognito: whether to also logout cognito
+        :param logout_redirect_uri: a redirect URI
+        :return: the response
+        """
+        self.session_cache.delete(request.cookies.get(USER_SESSION_COOKIE))
+        if logout_cognito:
+            return await self.cognito.logout_redirect(
+                request, post_logout_redirect_uri=logout_redirect_uri
+            )
+        elif logout_redirect_uri:
+            return RedirectResponse(url=logout_redirect_uri)
+        else:
+            return {"status": "logout success"}
 
     async def auth_callback(self, request: Request, response: Response):
         """
@@ -77,7 +130,7 @@ class BffAuth:
         """
         try:
             # Authlib exchanges the authorization code for the tokens
-            token_response = await self.oauth.cognito.authorize_access_token(request)
+            token_response = await self.cognito.authorize_access_token(request)
         except Exception as e:
             logger.warning("Cognito authorization failed: %s", e)
             raise HTTPException(status_code=400, detail="Authentication failed")
@@ -95,18 +148,17 @@ class BffAuth:
         # Generate a cryptographically secure random session ID
         session_id = secrets.token_urlsafe(32)
 
-        # TODO keep the session alive for the duration of the refresh token (or even longer!), not the duration of the access token
-
-        # Store tokens inside DiskCache with an explicit TTL matching the token's lifetime
         self.session_cache.set(
             session_id,
             SessionData(
                 access_token=access_token,
                 refresh_token=refresh_token,
-                expires_at=expires_at,
+                access_token_expires_at=expires_at,
+                session_expires_at=time.time() + SESSION_COOKIE_MAX_AGE,
             ),
-            expire=expires_in,
         )
+
+        response = RedirectResponse("/")
 
         # Attach cookie to response (HttpOnly + Secure protects against XSS)
         response.set_cookie(
@@ -115,10 +167,10 @@ class BffAuth:
             httponly=True,
             secure=True,  # Ensure your local SPA/BFF uses HTTPS or localhost
             samesite="lax",  # Helps protect against CSRF attacks
-            max_age=expires_in,
+            max_age=SESSION_COOKIE_MAX_AGE,
         )
 
-        return {"status": "Successfully logged in. Session established."}
+        return response
 
     async def _refresh_cognito_tokens(self, refresh_token: str) -> dict:
         """
@@ -158,10 +210,12 @@ class BffAuth:
         session_data = self.session_cache.get(session_id)
 
         if not has_bearer and session_data:
+            update_session_cookie: bool = False
             try:
                 # Trigger refresh if token is expired OR within a 5-minute (300 seconds) buffer window
                 buffer_window = 300
-                if time.time() > (session_data.expires_at - buffer_window):
+                if time.time() > (session_data.access_token_expires_at - buffer_window):
+                    logger.info("Refreshing access token for session %s", session_id)
                     # Request new tokens from AWS Cognito
                     new_tokens = await self._refresh_cognito_tokens(
                         session_data.refresh_token
@@ -179,31 +233,32 @@ class BffAuth:
                     session_data = SessionData(
                         access_token=access_token,
                         refresh_token=new_refresh_token,
-                        expires_at=expires_at,
+                        access_token_expires_at=expires_at,
+                        session_expires_at=time.time() + SESSION_COOKIE_MAX_AGE,
                     )
-
-                    # 1. Update DiskCache with new credentials
-                    self.session_cache.set(
-                        session_id,
-                        session_data,
-                        expire=expires_in,
-                    )
-
-                    # 2. Renew browser cookie validity window
-                    response_processor = lambda r: r.set_cookie(
-                        key=USER_SESSION_COOKIE,
-                        value=session_id,
-                        httponly=True,
-                        secure=True,
-                        samesite="lax",
-                        max_age=expires_in,
-                    )
+                    update_session_cookie = True
+                elif session_data.needs_refresh():
+                    update_session_cookie = True
 
             except Exception:
                 raise HTTPException(status_code=401, detail="Session validation failed")
 
             if not session_data:
                 raise HTTPException(status_code=401, detail="Authentication required")
+
+            if update_session_cookie:
+                # 1. Update DiskCache with updated session data
+                self.session_cache.set(session_id, session_data)
+
+                # 2. Renew browser cookie validity window
+                response_processor = lambda r: r.set_cookie(
+                    key=USER_SESSION_COOKIE,
+                    value=session_id,
+                    httponly=True,
+                    secure=True,
+                    samesite="lax",
+                    max_age=session_data.session_expires_at - time.time(),
+                )
 
             authorization_header = f"Bearer {session_data.access_token}"
 
