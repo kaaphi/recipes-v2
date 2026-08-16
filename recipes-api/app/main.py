@@ -66,6 +66,11 @@ async def login(request: Request):
     return await bff_auth.login(request)
 
 
+@app.get("/logout")
+async def login(request: Request, logout_redirect_uri: str | None = None):
+    return await bff_auth.logout(request, logout_redirect_uri=logout_redirect_uri)
+
+
 @app.get("/oidc_callback")
 async def auth_callback(request: Request, response: Response):
     return await bff_auth.auth_callback(request, response)
