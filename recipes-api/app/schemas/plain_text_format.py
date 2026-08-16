@@ -1,5 +1,4 @@
-from collections.abc import Generator
-from typing import Callable
+from collections.abc import Callable, Generator
 
 from app.schemas.api_models import PlainTextRecipe
 from app.schemas.dynamodb_models import IngredientList, Recipe
@@ -32,7 +31,7 @@ class PlainTextParser:
 
     def _lines(
         self, skip_empty_lines=False, until: Callable[[str], bool] = is_empty_line
-    ) -> Generator[str, None, None]:
+    ) -> Generator[str]:
         if skip_empty_lines:
             self._peek_next(skip_empty_lines)
 
@@ -67,7 +66,7 @@ class PlainTextParser:
             ingredientLists=ingredient_lists,
         )
 
-    def _parse_ingredients(self) -> Generator[IngredientList, None, None]:
+    def _parse_ingredients(self) -> Generator[IngredientList]:
         is_default = True
 
         while True:

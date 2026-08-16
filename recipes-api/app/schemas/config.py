@@ -14,14 +14,37 @@ def load_config(
     return RecipesConfig.model_validate(data)
 
 
-class RecipesCognitoSettings(CognitoSettings):
+class RecipesCognitoSettings(BaseSettings):
     check_expiration: bool = True
     jwt_header_name: str = "Authorization"
     jwt_header_prefix: str = "Bearer"
+
+    region: str
+    userpool_id: str
+    client_id: str
+    client_secret: str
+    authority: str
+
+    redirect_uri: str
+
+    def get_cognito_settings(self) -> CognitoSettings:
+        return CognitoSettings(
+            check_expiration=True,
+            jwt_header_name="Authorization",
+            jwt_header_prefix="Bearer",
+            userpools={
+                "main": {
+                    "region": self.region,
+                    "userpool_id": self.userpool_id,
+                    "app_client_id": self.client_id,
+                }
+            },
+        )
 
 
 class RecipesConfig(BaseSettings):
     table_name: str
     boto_config_override: dict[str, str] = {}
+    session_cache_dir: str = "./.cache/sessions"
 
     cognito_auth: RecipesCognitoSettings

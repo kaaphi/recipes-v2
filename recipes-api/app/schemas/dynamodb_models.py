@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Annotated, Union
+from typing import Annotated
 
-from pydantic import BaseModel, Tag, Discriminator, computed_field, field_validator
+from pydantic import BaseModel, Discriminator, Tag, computed_field, field_validator
 
 
 def dynamodb_dump_args(additional_exclude: set[str] = set()) -> dict:
@@ -108,7 +108,7 @@ def dynamo_db_item_discriminator(v):
         sk = v["sk"]
     else:
         # pk = getattr(v, "pk")
-        sk = getattr(v, "sk")
+        sk = v.sk
 
     match sk:
         case "#m":
@@ -120,6 +120,6 @@ def dynamo_db_item_discriminator(v):
 
 
 DynamoDbItem = Annotated[
-    Union[Annotated[User, Tag("User")], Annotated[Recipe, Tag("Recipe")]],
+    Annotated[User, Tag("User")] | Annotated[Recipe, Tag("Recipe")],
     Discriminator(dynamo_db_item_discriminator),
 ]

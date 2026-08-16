@@ -1,23 +1,28 @@
 import logging
+import os
 
-from fastapi import FastAPI, Depends, Response, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi_cognito import CognitoAuth, CognitoToken
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.schemas.api_models import (
-    UserRecipes,
     PlainTextWrapper,
     RecipeSearchResult,
+    RecipeUpdate,
     SharedUserRecipes,
     TitledPlainTextWrapper,
-    RecipeUpdate,
+    UserRecipes,
 )
-from app.schemas.config import load_config, RecipesConfig
+from app.schemas.config import RecipesConfig, load_config
 from app.schemas.dynamodb_models import Recipe
-from app.schemas.plain_text_format import to_plain_text, from_plain_text
+from app.schemas.plain_text_format import from_plain_text, to_plain_text
 from app.services import RecipeService, ScopedRecipeService
+from app.services.auth import BffAuth, BffMiddleware
+
+LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=LOGGING_LEVEL,
     format="%(asctime)s %(levelname)s %(message)s",
 )
 logger = logging.getLogger(__name__)
@@ -25,9 +30,16 @@ logger = logging.getLogger(__name__)
 config: RecipesConfig = load_config()
 service = RecipeService(config)
 
-cognito: CognitoAuth = CognitoAuth(settings=config.cognito_auth)
+cognito: CognitoAuth = CognitoAuth(settings=config.cognito_auth.get_cognito_settings())
 
-app: FastAPI = FastAPI(dependencies=[Depends(cognito.auth_required)])
+bff_auth: BffAuth = BffAuth(
+    config=config.cognito_auth, session_cache_dir=config.session_cache_dir
+)
+
+# app: FastAPI = FastAPI(dependencies=[Depends(cognito.auth_required)])
+app: FastAPI = FastAPI()
+app.add_middleware(BffMiddleware, bff_auth=bff_auth)
+app.add_middleware(SessionMiddleware, secret_key=config.cognito_auth.client_secret)
 
 
 class PlainTextRecipeResponse(Response):
@@ -47,6 +59,16 @@ def scoped_recipe_service(
             status_code=status.HTTP_404_NOT_FOUND, detail=msg
         ),
     )
+
+
+@app.get("/login")
+async def login(request: Request):
+    return await bff_auth.login(request)
+
+
+@app.get("/oidc_callback")
+async def auth_callback(request: Request, response: Response):
+    return await bff_auth.auth_callback(request, response)
 
 
 @app.get("/user/recipes")

@@ -9,7 +9,7 @@ import psycopg2
 import psycopg2.extras
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from app.schemas.dynamodb_models import Recipe, IngredientList, User, BaseRecipes
+from app.schemas.dynamodb_models import BaseRecipes, IngredientList, Recipe, User
 from dev import Config, get_default_config_path, load_migration_config
 
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +31,6 @@ class LegacyRecipe(BaseModel):
     method: str
     sources: list[str] | None = []
     ingredientLists: list[LegacyIngredientList]
-    pass
 
 
 class LegacyRecipeContainer(BaseModel):
@@ -85,18 +84,17 @@ def load_legacy_from_postgres() -> list[LegacyRecipeContainer]:
         user=config.postgres.user,
         password=config.postgres.password,
     )
-    with conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            # Execute query with parameter binding
-            cur.execute("SELECT * FROM recipes", (1,))
-            # Fetch result
+    with conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        # Execute query with parameter binding
+        cur.execute("SELECT * FROM recipes", (1,))
+        # Fetch result
 
-            raw_rows = cur.fetchall()
-            with open(
-                config.legacy_data_file,
-                "w",
-            ) as f:
-                json.dump(raw_rows, f, default=str)
+        raw_rows = cur.fetchall()
+        with open(
+            config.legacy_data_file,
+            "w",
+        ) as f:
+            json.dump(raw_rows, f, default=str)
 
     legacy_adapter = TypeAdapter(list[LegacyRecipeContainer])
     containers = legacy_adapter.validate_python(raw_rows)

@@ -53,7 +53,6 @@ class DynamoDBLoader:
 
         if self.table_exists():
             logger.info(f"Table {self.table_name} already exists.")
-            pass
         else:
             logger.info(f"Table {self.table_name} does not exist. Will create it.")
             table = self.dynamodb_resource.create_table(

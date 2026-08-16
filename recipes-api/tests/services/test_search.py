@@ -1,4 +1,5 @@
 import pytest
+
 from app.services.search import score_string
 
 title = "This is a title"
