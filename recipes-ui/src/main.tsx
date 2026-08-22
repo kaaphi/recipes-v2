@@ -4,8 +4,6 @@ import '@mantine/notifications/styles.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App, { Login } from './App.tsx';
-import { AuthProvider, type AuthProviderNoUserManagerProps } from 'react-oidc-context';
-import { WebStorageStateStore, type User } from 'oidc-client-ts';
 import { BrowserRouter, Route, Routes } from "react-router";
 import { MantineProvider } from '@mantine/core';
 import { ArchivedRecipes, MyRecipes, SharedRecipes } from './AllRecipes.tsx';
@@ -16,32 +14,13 @@ import { SearchResults } from './SearchResults.tsx';
 import { RecipeView } from './Recipe.tsx';
 import { AuthWrapper } from './AuthComponents.tsx';
 import { NotFound } from './NotFound.tsx';
+import { AuthProvider } from './auth/AuthProvider.tsx';
 
-
-const cognitoAuthConfig : AuthProviderNoUserManagerProps = {
-  authority: import.meta.env.VITE_OAUTH_AUTHORITY,
-  client_id: import.meta.env.VITE_OAUTH_CLIENT_ID,
-  redirect_uri: `${window.location.origin}/oidc_callback`,
-  response_type: "code",
-  scope: "openid",
-  // This tells the library to persist the session across browser closes
-  userStore: new WebStorageStateStore({ store: window.localStorage }), 
-  automaticSilentRenew: true,
-
-  onSigninCallback: (_user :  User | undefined) => {
-    // Remove authentication payload from URL
-    window.history.replaceState(
-      {},
-      document.title,
-      window.location.pathname
-    );
-  }
-};
 
 // wrap the application with AuthProvider
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider {...cognitoAuthConfig}>
+    <AuthProvider>
       <MantineProvider theme={theme}>
         <Notifications />
         <BrowserRouter>

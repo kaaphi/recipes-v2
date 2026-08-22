@@ -2,6 +2,7 @@ import logging
 import secrets
 import time
 from collections.abc import Callable
+from urllib.parse import urlencode
 
 import httpx
 from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
@@ -10,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, ValidationError
 from starlette import status
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import RedirectResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 from app.schemas.config import RecipesCognitoSettings
 
@@ -46,17 +47,7 @@ class SessionCache:
         self.cache = Cache(cache_dir)
 
     def get(self, session_id: str) -> SessionData | None:
-        session_data_str = self.cache.get(session_id)
-        try:
-            return (
-                SessionData.model_validate_json(session_data_str)
-                if session_data_str
-                else None
-            )
-        except ValidationError:
-            logger.error("Bad session data for session id %s", session_id)
-            self.delete(session_id)
-            return None
+        return self._get_or_pop_session_data(session_id, pop=False)
 
     def set(self, session_id: str, session_data: SessionData):
         """
@@ -73,8 +64,26 @@ class SessionCache:
         else:
             self.cache.set(session_id, session_data.model_dump_json(), expire=expire)
 
-    def delete(self, session_id: str):
-        self.cache.delete(session_id)
+    def delete(self, session_id: str) -> SessionData | None:
+        return self._get_or_pop_session_data(session_id, pop=True)
+
+    def _get_or_pop_session_data(
+        self, session_id: str, pop: bool = False
+    ) -> SessionData | None:
+        session_data_str = (
+            self.cache.pop(session_id) if pop else self.cache.get(session_id)
+        )
+        try:
+            return (
+                SessionData.model_validate_json(session_data_str)
+                if session_data_str
+                else None
+            )
+        except ValidationError:
+            logger.error("Bad session data for session id %s", session_id)
+            if not pop:
+                self.cache.delete(session_id)
+            return None
 
 
 class BffAuth:
@@ -105,7 +114,7 @@ class BffAuth:
         request: Request,
         logout_cognito: bool = False,
         logout_redirect_uri: str | None = None,
-    ) -> Response | dict:
+    ) -> Response:
         """
         Logs out the user
         :param request: the request
@@ -113,15 +122,43 @@ class BffAuth:
         :param logout_redirect_uri: a redirect URI
         :return: the response
         """
-        self.session_cache.delete(request.cookies.get(USER_SESSION_COOKIE))
+        self.session_cache.delete(
+            request.cookies.get(USER_SESSION_COOKIE)
+        )
         if logout_cognito:
-            return await self.cognito.logout_redirect(
-                request, post_logout_redirect_uri=logout_redirect_uri
-            )
+            if not logout_redirect_uri:
+                raise ValueError(
+                    "logout_redirect_uri must be specified when logout_cognito is true!"
+                )
+            response = await self._cognito_logout_redirect(logout_redirect_uri)
         elif logout_redirect_uri:
-            return RedirectResponse(url=logout_redirect_uri)
+            response = RedirectResponse(url=logout_redirect_uri)
         else:
-            return {"status": "logout success"}
+            response = JSONResponse({"status": "logout success"})
+
+        response.delete_cookie(USER_SESSION_COOKIE)
+        return response
+
+    async def _cognito_logout_redirect(self, logout_redirect_uri: str):
+        """
+        Create a cognito-compliant redirect for logout. We can't use the authlib logout_redirect() because cognito
+        is not fully OIDC compliant and needs different params for logout.
+        :param logout_redirect_uri: the redirect URI for logout
+        :return: a RedirectResponse to the coginto logout URI
+        """
+        metadata = await self.cognito.load_server_metadata()
+        end_session_endpoint = metadata.get("end_session_endpoint")
+
+        if not end_session_endpoint:
+            raise RuntimeError('Missing "end_session_endpoint" in metadata')
+
+        client_id = self.cognito.client_id
+
+        query_params = {"client_id": client_id, "logout_uri": logout_redirect_uri}
+
+        cognito_logout_url = f"{end_session_endpoint}?{urlencode(query_params)}"
+
+        return RedirectResponse(url=cognito_logout_url)
 
     async def auth_callback(self, request: Request, response: Response):
         """

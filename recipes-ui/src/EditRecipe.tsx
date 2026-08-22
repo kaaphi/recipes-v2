@@ -1,5 +1,4 @@
 import { Alert, Button, Divider, Flex, Group, LoadingOverlay, Menu, Modal, rem, Space, Stack, Text, Textarea, TextInput } from "@mantine/core";
-import { useAuth } from "react-oidc-context";
 import { Link, useNavigate, useParams } from "react-router";
 import { headerHeight } from "./App";
 import { useCallback, useState } from "react";
@@ -22,15 +21,12 @@ type UseModifyRecipeOnSuccessReturnValue = {
 const useModifyRecipe = (method: string, url: string, onSuccess?: (res: unknown) => UseModifyRecipeOnSuccessReturnValue, responseParser?: (res: Response) => Promise<unknown>, fetchParams?: RequestInit): UseModifyRecipeReturnValue => {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<Error | null>(null)
-    const auth = useAuth()
     const { refetch: refreshRecipes } = useUserRecipes()
 
     const modifyRecipe = useCallback((body?: unknown): Promise<unknown> => {
         setSaving(true)
 
-        const headers: HeadersInit = {
-            "Authorization": `Bearer ${auth.user?.access_token}`,
-        }
+        const headers: HeadersInit = {}
 
         const params: RequestInit = {
             ...fetchParams,
@@ -76,7 +72,7 @@ const useModifyRecipe = (method: string, url: string, onSuccess?: (res: unknown)
                 setError(err)
                 return err
             });
-    }, [method, url, auth, fetchParams, onSuccess, refreshRecipes, responseParser])
+    }, [method, url, fetchParams, onSuccess, refreshRecipes, responseParser])
 
     return { modifyRecipe, saving: saving, error }
 

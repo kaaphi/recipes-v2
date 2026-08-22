@@ -1,7 +1,7 @@
 import { useLocalStorage } from "@mantine/hooks";
 import type { RecipeStub } from "./Recipes";
-import { useAuth } from "react-oidc-context";
 import { useCallback, useMemo } from "react";
+import { useAuth } from "./auth/AuthHooks";
 
 const EXPIRY_MS = 4 * 60 * 60 * 1000;
 const MAX_RECENT_RECIPES = 3
@@ -26,7 +26,7 @@ const getValidItems = (currentItems: RecentRecipe[]) => {
 
 export const useRecentRecipes = (): UseRecentRecipesReturnValue => {
     const auth = useAuth()
-    const userId = auth.user?.profile.sub
+    const userId = auth.user?.id
 
     const [recentRecipes, setRecentRecipes, removeRecentRecipes] = useLocalStorage<RecentRecipe[]>({ key: `recent-recipes-${userId}`, defaultValue: [] })
 

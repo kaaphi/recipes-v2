@@ -1,6 +1,6 @@
 import { LoadingOverlay } from "@mantine/core";
-import { useAuth } from "react-oidc-context";
 import { Navigate } from "react-router";
+import { useAuth } from "./auth/AuthHooks";
 
 export type AuthWrapperProps = {
     expectAuthenticated?: boolean,
@@ -14,7 +14,7 @@ export const AuthWrapper = ({ expectAuthenticated = true, children }: AuthWrappe
 
     if (!auth.isLoading) {
         if (auth.error) {
-            return (<div>Authentication error... {auth.error.message}</div>);
+            return (<div>Authentication error... {auth.error}</div>);
         }
 
         if (expectAuthenticated && !auth.isAuthenticated) {
