@@ -12,6 +12,11 @@ from app.schemas.dynamodb_models import (
 )
 
 
+class AuthorizedUser(BaseModel):
+    id: str
+    username: str
+
+
 class RecipeStub(BaseModel):
     title: str
     id: str

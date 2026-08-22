@@ -12,6 +12,7 @@ from app.schemas.api_models import (
     SharedUserRecipes,
     TitledPlainTextWrapper,
     UserRecipes,
+    AuthorizedUser,
 )
 from app.schemas.config import RecipesConfig, load_config
 from app.schemas.dynamodb_models import Recipe
@@ -74,6 +75,13 @@ async def login(request: Request, logout_redirect_uri: str | None = None):
 @app.get("/oidc_callback")
 async def auth_callback(request: Request, response: Response):
     return await bff_auth.auth_callback(request, response)
+
+
+@app.get("/authorizedUser")
+async def authorized_user(
+    auth: CognitoToken = Depends(cognito.auth_required),
+) -> AuthorizedUser:
+    return AuthorizedUser(id=auth.cognito_id, username=auth.username)
 
 
 @app.get("/user/recipes")
