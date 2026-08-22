@@ -1,7 +1,6 @@
 import { Anchor, Collapse, List, LoadingOverlay, Paper, Stack, Text, Title, Typography, UnstyledButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Marked } from "@ts-stack/markdown";
-import { useAuth } from "react-oidc-context";
 import { useOutletContext, useParams } from "react-router";
 import type { OutletContextType } from "./App";
 import { useEffect } from "react";
@@ -9,6 +8,7 @@ import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { stubFromRecipe, useAuthFetch, type IngredientList, type Recipe } from "./Recipes";
 import { useRecentRecipes } from "./RecentRecipes";
 import dayjs from "dayjs";
+import { useAuth } from "./auth/AuthHooks";
 
 const Ingredients = ({ list }: { list: IngredientList }) => {
     return (
@@ -85,7 +85,7 @@ export const RecipeView = () => {
     }, [data, addRecentRecipe])
 
     useEffect(() => {
-        const isShared = data?.user_id != auth.user?.profile.sub;
+        const isShared = data?.user_id != auth.user?.id;
 
         // Only update if the value is actually different to avoid unnecessary loops
         if (recipeState.isSharedRecipe !== isShared) {
@@ -93,7 +93,7 @@ export const RecipeView = () => {
         }
 
         // Dependencies: Run only when these values change
-    }, [data?.user_id, auth.user?.profile.sub, recipeState, setRecipeState]);
+    }, [data?.user_id, auth.user?.id, recipeState, setRecipeState]);
 
     return (
         <>

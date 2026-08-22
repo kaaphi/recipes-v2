@@ -4,8 +4,11 @@ export interface User { id: string; username: string; }
 
 export interface AuthContextType {
   user: User | null;
-  loading: boolean;
+  isLoading: boolean;
+  isAuthenticated: boolean
   logout: () => void;
+  login: () => void;
+  error: string | null;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

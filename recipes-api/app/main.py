@@ -6,13 +6,13 @@ from fastapi_cognito import CognitoAuth, CognitoToken
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.schemas.api_models import (
+    AuthorizedUser,
     PlainTextWrapper,
     RecipeSearchResult,
     RecipeUpdate,
     SharedUserRecipes,
     TitledPlainTextWrapper,
     UserRecipes,
-    AuthorizedUser,
 )
 from app.schemas.config import RecipesConfig, load_config
 from app.schemas.dynamodb_models import Recipe
@@ -68,8 +68,14 @@ async def login(request: Request):
 
 
 @app.get("/logout")
-async def login(request: Request, logout_redirect_uri: str | None = None):
-    return await bff_auth.logout(request, logout_redirect_uri=logout_redirect_uri)
+async def login(
+    request: Request,
+    logout_redirect_uri: str | None = None,
+    logout_cognito: bool = True,
+):
+    return await bff_auth.logout(
+        request, logout_redirect_uri=logout_redirect_uri, logout_cognito=logout_cognito
+    )
 
 
 @app.get("/oidc_callback")

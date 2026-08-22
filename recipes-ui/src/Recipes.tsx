@@ -1,8 +1,8 @@
 import { useFetch, type UseFetchReturnValue } from "@mantine/hooks";
-import { useAuth } from "react-oidc-context";
 import { createContext, useContext, useEffect } from "react";
 import { notifications } from "@mantine/notifications";
 import { XIcon } from "@phosphor-icons/react";
+import { useAuth } from "./auth/AuthHooks";
 
 export interface IngredientList {
     name?: string;
@@ -76,16 +76,14 @@ export const useAuthFetch = <T,>(url: string): UseFetchReturnValue<T> => {
         url,
         {
             autoInvoke: false,
-            headers: {
-                "Authorization": `Bearer ${auth.user?.access_token}`
-            }
-        }
+        },
+
     );
 
     const { refetch } = rv
 
     useEffect(() => {
-        if (auth.isAuthenticated && auth.user?.access_token) {
+        if (auth.isAuthenticated) {
             refetch();
         }
     }, [auth.isAuthenticated, auth.user, refetch]);

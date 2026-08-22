@@ -4,9 +4,8 @@ import { useDisclosure } from '@mantine/hooks';
 import { Outlet, useNavigate } from 'react-router';
 import { NavBar } from './Navbar';
 import { RecipeContext, useAuthFetch, type UserRecipes } from './Recipes';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import CookingPotIcon from './assets/cooking-pot.svg?react';
-import { useAuth } from 'react-oidc-context';
 
 
 export type RecipeState = {
@@ -41,25 +40,6 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
 export const App = () => {
   const [opened, { toggle, close }] = useDisclosure();
   const [recipeState, setRecipeState] = useState<RecipeState>({ isSharedRecipe: false })
-
-  const auth = useAuth();
-
-  useEffect(() => {
-    // 1. Check if the user is loaded but the access token has expired
-    if (!auth.isLoading && !auth.isAuthenticated && auth.user && auth.user.expired) {
-      // 2. Check if a refresh token is present in the user profile
-      if (auth.user.refresh_token) {
-        console.log("Access token expired, but refresh token found. Renewing...");
-        auth.signinSilent().catch((err) => {
-          console.error("Silent renew failed, forcing login:", err);
-          auth.signinRedirect();
-        });
-      } else {
-        // No refresh token available, session is truly dead
-        auth.signinRedirect();
-      }
-    }
-  }, [auth]);
 
   const navigate = useNavigate()
 

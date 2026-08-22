@@ -1,12 +1,12 @@
 import { AppShell, Autocomplete, CloseButton, Highlight, NavLink, Stack, type AutocompleteProps, type ComboboxItem, type NavLinkProps, type OptionsFilter } from "@mantine/core";
 import { ArchiveIcon, BookBookmarkIcon, BookOpenTextIcon, BugIcon, HouseIcon, MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, SignInIcon, SignOutIcon, UserIcon, UserListIcon } from "@phosphor-icons/react";
-import { useAuth } from "react-oidc-context";
 import { NavLink as RouterNavLink, useNavigate, useParams } from 'react-router';
 import { useUserRecipes, type User } from "./Recipes";
 import { useCallback, useRef, useState } from "react";
 import type { OutletContextType } from "./App";
 import { useRecentRecipes } from "./RecentRecipes";
 import { expireAccessToken } from "./DevOnlyUtilities";
+import { useAuth } from "./auth/AuthHooks";
 
 const NAV_ICON_SIZE = 24
 
@@ -197,14 +197,6 @@ export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
     const { recipeId } = useParams();
     const userRecipes = useUserRecipes();
 
-    const signOutRedirect = () => {
-        auth.removeUser();
-        const clientId = import.meta.env.VITE_OAUTH_CLIENT_ID;
-        const logoutUri = `${window.location.origin}/`;
-        const domain = import.meta.env.VITE_OAUTH_DOMAIN;
-        window.location.href = `https://${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
-    };
-
     return (
         <>
             <AppShell.Section grow>
@@ -213,16 +205,16 @@ export const NavBar = ({ closeNavBar, context }: NavBarParams) => {
                 <RecentRecipes closeNavBar={closeNavBar}/>
                 <NavItem label="New Recipe" leftSection={<PlusIcon size={NAV_ICON_SIZE} />} link="/new" onClick={closeNavBar} />
                 <NavItem label="Edit Recipe" leftSection={<PencilSimpleIcon size={NAV_ICON_SIZE} />} link={`/recipe/${recipeId}/edit`} onClick={closeNavBar} disabled={!recipeId || context.recipeState.isSharedRecipe} />
-                <NavItem label="Sign in" leftSection={<SignInIcon size={NAV_ICON_SIZE} />} onClick={() => auth.signinRedirect()} authCondition="requireNoAuth" />
+                <NavItem label="Sign in" leftSection={<SignInIcon size={NAV_ICON_SIZE} />} onClick={() => auth.login()} authCondition="requireNoAuth" />
                 <SearchBar closeNavBar={closeNavBar} />
             </AppShell.Section>
 
             <AppShell.Section>
                 {import.meta.env.DEV && <DevActions />}
-                <NavItem label={auth.user?.profile.email} href="#required-for-focus" leftSection={<UserIcon size={NAV_ICON_SIZE} />}>
+                <NavItem label={auth.user?.username} href="#required-for-focus" leftSection={<UserIcon size={NAV_ICON_SIZE} />}>
                     <NavItem label="Sign out" leftSection={<SignOutIcon size={NAV_ICON_SIZE} />} onClick={() => {
                         closeNavBar();
-                        signOutRedirect();
+                        auth.logout()
                     }} />                    
                 </NavItem>
             </AppShell.Section>
