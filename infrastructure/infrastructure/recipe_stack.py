@@ -117,8 +117,7 @@ class RecipeStack(Stack):
             if self.config.is_dev and host.startswith("localhost"):
                 scheme = "http"
 
-            callback_urls.append(f"{scheme}://{host}/oidc_callback")
-            callback_urls.append(f"{scheme}://{host}/api/oidc_callback")
+            callback_urls.append(f"{scheme}://{host}/auth/oidc_callback")
             logout_urls.append(f"{scheme}://{host}/")
 
         if self.config.is_dev:
