@@ -1,80 +1,27 @@
 import { Alert, Button, Divider, Flex, Group, LoadingOverlay, Menu, Modal, rem, Space, Stack, Text, Textarea, TextInput } from "@mantine/core";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, type NavigateFunction } from "react-router";
 import { headerHeight } from "./App";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { type RecipeTextRequest, useAuthFetch, useUserRecipes, type Recipe, type RecipeTextResponse, type RecipeUpdate } from "./Recipes";
-import { useHandleError } from "./UtilityHooks";
 import { InfoIcon, WarningIcon } from "@phosphor-icons/react";
 import { useDisclosure } from "@mantine/hooks";
+import { useAuthMutate } from "./api/ApiHooks";
+import type { UseMutationResult } from "@tanstack/react-query";
 
-type UseModifyRecipeReturnValue = {
-    modifyRecipe: (body?: unknown) => Promise<unknown>,
-    saving: boolean,
-    error: Error | null,
-}
-
-type UseModifyRecipeOnSuccessReturnValue = {
-    onSuccessAction: () => void,
-    refreshRecipes: boolean,
-}
-
-const useModifyRecipe = (method: string, url: string, onSuccess?: (res: unknown) => UseModifyRecipeOnSuccessReturnValue, responseParser?: (res: Response) => Promise<unknown>, fetchParams?: RequestInit): UseModifyRecipeReturnValue => {
-    const [saving, setSaving] = useState(false)
-    const [error, setError] = useState<Error | null>(null)
+const useModifyRecipe = <TData,TVariables>(method: string, url: string, refreshRecipesOnSuccess: boolean, onSuccessAction: (navigate: NavigateFunction, data: TData) => void): UseMutationResult<TData, Error, TVariables> => {
     const { refetch: refreshRecipes } = useUserRecipes()
+    const navigate = useNavigate()
 
-    const modifyRecipe = useCallback((body?: unknown): Promise<unknown> => {
-        setSaving(true)
-
-        const headers: HeadersInit = {}
-
-        const params: RequestInit = {
-            ...fetchParams,
-            headers: headers,
-            method: method
+    const rv = useAuthMutate<TData,TVariables>(url, method, {
+        onSuccess: (data) => {
+            if (refreshRecipesOnSuccess) {
+                refreshRecipes()
+            }
+            onSuccessAction(navigate, data)
         }
+    });
 
-        if (body) {
-            headers["Content-Type"] = "application/json"
-            params.body = JSON.stringify(body)
-        }
-
-        return fetch(url, params)
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error(`Request failed with status ${res.status}`)
-                }
-                if (responseParser) {
-                    return responseParser(res)
-                } else {
-                    return res
-                }
-            })
-            .then((res) => {
-                if (!onSuccess) {
-                    setSaving(false)
-                    return
-                } else {
-                    const onSuccessResult = onSuccess(res)
-                    if(onSuccessResult.refreshRecipes) {
-                        refreshRecipes()
-                        setSaving(false)
-                    }
-                    onSuccessResult.onSuccessAction()
-                }
-                
-                if (onSuccess) {
-                    return onSuccess(res)
-                }
-            })
-            .catch((err) => {
-                setSaving(false)
-                setError(err)
-                return err
-            });
-    }, [method, url, fetchParams, onSuccess, refreshRecipes, responseParser])
-
-    return { modifyRecipe, saving: saving, error }
+    return rv
 
 }
 
@@ -84,52 +31,35 @@ type ConfirmModalParams = {
 } & ManageRecipeMenuParams
 
 const ConfirmArchiveUnarchiveModal = ({ opened, close, recipeId, recipe }: ConfirmModalParams) => {
-    const navigate = useNavigate()
-    const onSuccess = useCallback((_: unknown): UseModifyRecipeOnSuccessReturnValue => {
-        return {
-            refreshRecipes: true,
-            onSuccessAction: () => {
-                if (recipe.is_archived) {
-                    navigate(`/recipe/${recipeId}`)
-                } else {
-                    navigate("/")
-                }
-            }
+    const { mutate, isPending } = useModifyRecipe<unknown, RecipeUpdate>("PUT", `/api/recipe/${recipeId}`, true, (navigate) => {
+        if (recipe.is_archived) {
+            navigate(`/recipe/${recipeId}`)
+        } else {
+            navigate("/")
         }
-    }, [navigate, recipe.is_archived, recipeId])
-    const { modifyRecipe, saving, error } = useModifyRecipe("PUT", `/api/recipe/${recipeId}`, onSuccess)
+    })
+
     const archiveBody: RecipeUpdate = {
         is_archived: !recipe.is_archived
     }
 
-    useHandleError(error)
-
     return <Modal opened={opened} onClose={close} title={recipe.is_archived ? "Unarchive Recipe" : "Archive Recipe"}>
-        <LoadingOverlay visible={saving} />
+        <LoadingOverlay visible={isPending} />
         <Stack>
             <Text>Please confirm that you want to {recipe.is_archived ? "unarchive" : "archive"} <Text span fw={700}>{recipe.title}</Text>.</Text>
             <Divider />
-            <Group justify="flex-end"><Button onClick={() => modifyRecipe(archiveBody)}>{recipe.is_archived ? "Unarchive" : "Archive"} Recipe</Button><Button variant="outline" onClick={close}>Cancel</Button></Group>
+            <Group justify="flex-end"><Button onClick={() => mutate(archiveBody)}>{recipe.is_archived ? "Unarchive" : "Archive"} Recipe</Button><Button variant="outline" onClick={close}>Cancel</Button></Group>
         </Stack>
     </Modal>
 }
 
 const ConfirmDeleteModal = ({ opened, close, recipeId, recipe }: ConfirmModalParams) => {
     const [confirmValue, setConfirmValue] = useState('');
-    const navigate = useNavigate()
-    const onSuccess = useCallback((_: unknown): UseModifyRecipeOnSuccessReturnValue => {
-        return {
-            refreshRecipes: true,
-            onSuccessAction: () => {
-                setConfirmValue("")
-                navigate("/")
-            }
-        }
-    }, [navigate, setConfirmValue])
 
-    const { modifyRecipe, saving, error } = useModifyRecipe("DELETE", `/api/recipe/${recipeId}?is_archived=${recipe.is_archived}`, onSuccess)
-
-    useHandleError(error)
+    const { mutate, isPending } = useModifyRecipe("DELETE", `/api/recipe/${recipeId}?is_archived=${recipe.is_archived}`, true, (navigate) => {
+        setConfirmValue("")
+        navigate("/")
+    })
 
     const doClose = () => {
         setConfirmValue("")
@@ -137,14 +67,14 @@ const ConfirmDeleteModal = ({ opened, close, recipeId, recipe }: ConfirmModalPar
     }
 
     return <Modal opened={opened} onClose={doClose} title="Delete Recipe">
-        <LoadingOverlay visible={saving} />
+        <LoadingOverlay visible={isPending} />
         <Stack>
             <Text>Please confirm that you want to delete <Text span fw={700}>{recipe.title}</Text>.</Text>
             <Alert color="yellow" icon={<WarningIcon />}>Deleting a recipe cannot be undone!</Alert>
             <Text>To confirm this deletion, type "confirm".</Text>
             <TextInput placeholder="confirm" value={confirmValue} onChange={(event) => setConfirmValue(event.currentTarget.value)} />
             <Divider />
-            <Group justify="flex-end"><Button disabled={confirmValue !== "confirm"} onClick={() => modifyRecipe()}>Delete Recipe</Button><Button variant="outline" onClick={doClose}>Cancel</Button></Group>
+            <Group justify="flex-end"><Button disabled={confirmValue !== "confirm"} onClick={() => mutate()}>Delete Recipe</Button><Button variant="outline" onClick={doClose}>Cancel</Button></Group>
         </Stack>
     </Modal>
 }
@@ -185,27 +115,17 @@ interface EditComponentParams {
 
 
 const EditComponent = ({ recipeId, data, loading }: EditComponentParams) => {
-    const navigate = useNavigate()
-
     const method = recipeId ? "PUT" : "POST"
     const url = recipeId ? `/api/recipe/edit/${recipeId}` : "/api/recipe/edit"
-    const handleSuccess = useCallback((res: unknown): UseModifyRecipeOnSuccessReturnValue => {
-        return {
-            refreshRecipes: !recipeId,
-            onSuccessAction: () => {
-                const resultRecipeId = recipeId || (res as Recipe).recipe_id
-                navigate(`/recipe/${resultRecipeId}`)
-            }
-        }
-    }, [navigate, recipeId]);
 
-    const { modifyRecipe, saving, error } = useModifyRecipe(method, url, handleSuccess, (res) => res.json())
-
-    useHandleError(error)
+    const { mutate, isPending } = useModifyRecipe<Recipe,RecipeTextRequest>(method, url, !recipeId, (navigate, data) => {
+        const resultRecipeId = recipeId || data.recipe_id
+        navigate(`/recipe/${resultRecipeId}`)
+    })
 
     return (
         <>
-            <LoadingOverlay visible={loading || saving} />
+            <LoadingOverlay visible={loading || isPending} />
             <Flex direction="column" style={{
                 height: `calc(100vh - (${rem(headerHeight)} + var(--mantine-spacing-md) * 2))`
             }}>
@@ -214,7 +134,7 @@ const EditComponent = ({ recipeId, data, loading }: EditComponentParams) => {
                     const formData = new FormData(event.currentTarget);
                     const recipeText = formData.get('recipe-textarea') as string
                     const recipeTextRequest: RecipeTextRequest = { recipe: recipeText }
-                    modifyRecipe(recipeTextRequest)
+                    mutate(recipeTextRequest)
                 }}>
                     <Stack style={{ height: "100%" }}>
                         {data?.is_archived && <Alert icon={<InfoIcon />}>Archived recipes cannot be edited. Use the Actions menu to unarchive or delete this recipe.</Alert>}
