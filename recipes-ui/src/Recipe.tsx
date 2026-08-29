@@ -5,10 +5,11 @@ import { useOutletContext, useParams } from "react-router";
 import type { OutletContextType } from "./App";
 import { useEffect } from "react";
 import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
-import { stubFromRecipe, useAuthFetch, type IngredientList, type Recipe } from "./Recipes";
+import { stubFromRecipe, type IngredientList, type Recipe } from "./Recipes";
 import { useRecentRecipes } from "./RecentRecipes";
 import dayjs from "dayjs";
 import { useAuth } from "./auth/AuthHooks";
+import { useAuthFetch } from "./api/ApiHooks";
 
 const Ingredients = ({ list }: { list: IngredientList }) => {
     return (
@@ -72,7 +73,7 @@ export const RecipeView = () => {
     const auth = useAuth();
     const { recipeId } = useParams();
 
-    const { data, loading } = useAuthFetch<Recipe>(
+    const { data, isPending } = useAuthFetch<Recipe>(
         `/api/recipe/${recipeId}`
     );
     const { recipeState, setRecipeState } = useOutletContext<OutletContextType>();
@@ -97,7 +98,7 @@ export const RecipeView = () => {
 
     return (
         <>
-            <LoadingOverlay visible={loading} />
+            <LoadingOverlay visible={isPending} />
             <Stack>
                 <Title order={1}>{data?.title}{data?.is_archived && " (archived)"}</Title>
                 <Title order={3}>Ingredients</Title>
