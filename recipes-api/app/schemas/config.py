@@ -24,6 +24,7 @@ class RecipesCognitoSettings(BaseSettings):
     client_id: str
     client_secret: str
     authority: str
+    domain: str
 
     redirect_uri: str
 

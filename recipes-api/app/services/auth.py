@@ -1,3 +1,4 @@
+import base64
 import logging
 import secrets
 import time
@@ -9,7 +10,6 @@ from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from diskcache import Cache
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, ValidationError
-from starlette import status
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, RedirectResponse
 
@@ -122,9 +122,7 @@ class BffAuth:
         :param logout_redirect_uri: a redirect URI
         :return: the response
         """
-        self.session_cache.delete(
-            request.cookies.get(USER_SESSION_COOKIE)
-        )
+        self.session_cache.delete(request.cookies.get(USER_SESSION_COOKIE))
         if logout_cognito:
             if not logout_redirect_uri:
                 raise ValueError(
@@ -219,17 +217,26 @@ class BffAuth:
             "client_id": self.config.client_id,
             "refresh_token": refresh_token,
         }
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        raw_credentials = f"{self.config.client_id}:{self.config.client_secret}"
+        encoded_credentials = base64.b64encode(raw_credentials.encode("utf-8")).decode(
+            "utf-8"
+        )
+
+        # 2. Inject the Authorization header manually
+        headers = {"Authorization": f"Basic {encoded_credentials}"}
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.config.authority}/oauth2/token", data=payload, headers=headers
+                f"{self.config.domain}/oauth2/token", data=payload, headers=headers
             )
 
         if response.status_code != 200:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not refresh session token with provider",
+            logger.error(
+                f"Failed to refresh access token: {response.status_code} {response.json()}"
+            )
+            raise Exception(
+                f"Could not refresh session token with provider: {response.json()}",
             )
 
         return response.json()
@@ -280,8 +287,11 @@ class BffAuth:
                 elif session_data.needs_refresh():
                     update_session_cookie = True
 
-            except Exception:
-                raise HTTPException(status_code=401, detail="Session validation failed")
+            except HTTPException as e:
+                raise HTTPException(
+                    status_code=e.status_code,
+                    detail=f"Session validation failed: {e.detail}",
+                )
 
             if not session_data:
                 raise HTTPException(status_code=401, detail="Authentication required")
@@ -319,5 +329,8 @@ class BffMiddleware(BaseHTTPMiddleware):
         self.bff_auth = bff_auth
 
     async def dispatch(self, request: Request, call_next):
-        # noinspection PyProtectedMember
-        return await self.bff_auth._middleware_dispatch(request, call_next)
+        try:
+            # noinspection PyProtectedMember
+            return await self.bff_auth._middleware_dispatch(request, call_next)
+        except HTTPException as e:
+            return JSONResponse({"message": e.detail}, status_code=e.status_code)
