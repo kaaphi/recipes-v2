@@ -226,15 +226,25 @@ class BffAuth:
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"https://{self.config.domain}/oauth2/token", data=payload, headers=headers
+                f"https://{self.config.domain}/oauth2/token",
+                data=payload,
+                headers=headers,
             )
 
-        if response.status_code != 200:
+        if response.is_client_error:
             logger.error(
-                f"Failed to refresh access token: {response.status_code} {response.json()}"
+                f"Client error refreshing access token: {response.status_code} {response.json()}"
+            )
+            raise HTTPException(
+                status_code=401,
+                detail=f"Failed to refresh access token: {response.json()}",
+            )
+        elif not response.is_success:
+            logger.error(
+                f"Server error refreshing access token: {response.status_code} {response.text}"
             )
             raise Exception(
-                f"Could not refresh session token with provider: {response.json()}",
+                f"Could not refresh session token with provider: {response.text}",
             )
 
         return response.json()

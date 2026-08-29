@@ -19,13 +19,17 @@ from app.schemas.dynamodb_models import Recipe
 from app.schemas.plain_text_format import from_plain_text, to_plain_text
 from app.services import RecipeService, ScopedRecipeService
 from app.services.auth import BffAuth, BffMiddleware
+from dev_routes import conditionally_add_dev_routes
 
 LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
 
 logging.basicConfig(
-    level=LOGGING_LEVEL,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
 )
+app_logger = logging.getLogger("app")
+app_logger.setLevel(LOGGING_LEVEL)
+
 logger = logging.getLogger(__name__)
 
 config: RecipesConfig = load_config()
@@ -47,6 +51,8 @@ api_app.add_middleware(BffMiddleware, bff_auth=bff_auth)
 
 app.mount("/auth", auth_app)
 app.mount("/api", api_app)
+
+conditionally_add_dev_routes(api_app, bff_auth)
 
 
 class PlainTextRecipeResponse(Response):
