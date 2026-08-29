@@ -1,5 +1,12 @@
 import { createContext, useContext } from "react";
 
+export class NotAuthorizedError extends Error {
+  constructor() {
+    super("Not authorized!");
+    this.name = "NotAuthorizedError";
+  }
+}
+
 export interface User { id: string; username: string; }
 
 export interface AuthContextType {

@@ -235,6 +235,9 @@ class BffAuth:
         return response.json()
 
     async def _middleware_dispatch(self, request: Request, call_next):
+        if request.url.path in ["/login", "/logout", "/oidc_callback"]:
+            return await call_next(request)
+
         has_bearer = request.headers.get("Authorization") is not None
         session_id = request.cookies.get(USER_SESSION_COOKIE)
 
