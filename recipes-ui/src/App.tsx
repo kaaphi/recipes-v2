@@ -3,9 +3,10 @@ import { AppShell, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Outlet, useNavigate } from 'react-router';
 import { NavBar } from './Navbar';
-import { RecipeContext, useAuthFetch, type UserRecipes } from './Recipes';
+import { RecipeContext, type UserRecipes } from './Recipes';
 import { useState, type ReactNode } from 'react';
 import CookingPotIcon from './assets/cooking-pot.svg?react';
+import { useAuthFetch } from './api/ApiHooks';
 
 
 export type RecipeState = {

@@ -1,8 +1,6 @@
-import { useFetch, type UseFetchReturnValue } from "@mantine/hooks";
-import { createContext, useContext, useEffect } from "react";
-import { notifications } from "@mantine/notifications";
-import { XIcon } from "@phosphor-icons/react";
-import { useAuth } from "./auth/AuthHooks";
+import { createContext, useContext } from "react";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useAuthFetch } from "./api/ApiHooks";
 
 export interface IngredientList {
     name?: string;
@@ -66,46 +64,6 @@ export interface RecipeSearchResult {
     score: number
 }
 
-export type UseUserRecipesReturnValue = UseFetchReturnValue<UserRecipes>
-export type UseSearchRecipesReturnValue = UseFetchReturnValue<RecipeSearchResult[]>
-
-export const useAuthFetch = <T,>(url: string): UseFetchReturnValue<T> => {
-    const auth = useAuth();
-
-    const rv = useFetch<T>(
-        url,
-        {
-            autoInvoke: false,
-        },
-
-    );
-
-    const { refetch } = rv
-
-    useEffect(() => {
-        if (auth.isAuthenticated) {
-            refetch();
-        }
-    }, [auth.isAuthenticated, auth.user, refetch]);
-
-    useEffect(() => {
-        if (!rv.error) {
-            return
-        }
-
-        notifications.show({
-            title: "Error",
-            message: `${rv.error}`,
-            icon: <XIcon />,
-            color: "red",
-            autoClose: false,
-            position: "top-center"
-        })
-    }, [rv.error])
-
-    return rv;
-}
-
 export const handleDates = <T extends Record<string, unknown>>(obj: T, ...dateAttributes: string[]): T => {
     const rv = { ...obj } as Record<string, unknown>;
 
@@ -120,7 +78,7 @@ export const handleDates = <T extends Record<string, unknown>>(obj: T, ...dateAt
     return rv as T
 }
 
-export const useSearchRecipes = (query: string): UseSearchRecipesReturnValue => {
+export const useSearchRecipes = (query: string): UseQueryResult<UserRecipes> => {
     const params = new URLSearchParams({
         q: query
     });
@@ -128,7 +86,7 @@ export const useSearchRecipes = (query: string): UseSearchRecipesReturnValue => 
     return useAuthFetch(`/api/user/recipes/search?${params.toString()}`)
 }
 
-export const RecipeContext = createContext<UseUserRecipesReturnValue|null>(null);
+export const RecipeContext = createContext<UseQueryResult<UserRecipes>|null>(null);
 
 export const useUserRecipes = () => {
   const context = useContext(RecipeContext);

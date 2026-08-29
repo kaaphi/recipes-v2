@@ -1,10 +1,12 @@
 import { Anchor, Button, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
 import { Link, useParams } from "react-router";
-import { useAuthFetch, useUserRecipes, type RecipeStub, type UserRecipes, type UseUserRecipesReturnValue } from "./Recipes";
+import { useUserRecipes, type RecipeStub, type UserRecipes } from "./Recipes";
 import { scrollToElement } from "./UtilityHooks";
+import { useAuthFetch } from "./api/ApiHooks";
+import type { UseQueryResult } from "@tanstack/react-query";
 
-export const AllRecipes = (props: {recipes: UseUserRecipesReturnValue}) => {
-    const { data, loading } = props.recipes
+export const AllRecipes = (props: {recipes: UseQueryResult<UserRecipes>}) => {
+    const { data, isPending } = props.recipes
 
     const scrollToLetter = (letter: string) => {
         scrollToElement(`letter_${letter}`)
@@ -19,7 +21,7 @@ export const AllRecipes = (props: {recipes: UseUserRecipesReturnValue}) => {
 
     return (
         <>
-            <LoadingOverlay visible={loading || !data} />
+            <LoadingOverlay visible={isPending || !data} />
             <Stack>
             <Title id="title_top" order={1}>{data?.is_archive ? "Archived recipes" : "Recipes"} for {data?.user.display_name}</Title>
             <div>

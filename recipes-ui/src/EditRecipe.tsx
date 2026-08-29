@@ -2,10 +2,10 @@ import { Alert, Button, Divider, Flex, Group, LoadingOverlay, Menu, Modal, rem, 
 import { Link, useNavigate, useParams, type NavigateFunction } from "react-router";
 import { headerHeight } from "./App";
 import { useState } from "react";
-import { type RecipeTextRequest, useAuthFetch, useUserRecipes, type Recipe, type RecipeTextResponse, type RecipeUpdate } from "./Recipes";
+import { type RecipeTextRequest, useUserRecipes, type Recipe, type RecipeTextResponse, type RecipeUpdate } from "./Recipes";
 import { InfoIcon, WarningIcon } from "@phosphor-icons/react";
 import { useDisclosure } from "@mantine/hooks";
-import { useAuthMutate } from "./api/ApiHooks";
+import { useAuthFetch, useAuthMutate } from "./api/ApiHooks";
 import type { UseMutationResult } from "@tanstack/react-query";
 
 const useModifyRecipe = <TData,TVariables>(method: string, url: string, refreshRecipesOnSuccess: boolean, onSuccessAction: (navigate: NavigateFunction, data: TData) => void): UseMutationResult<TData, Error, TVariables> => {
@@ -109,7 +109,7 @@ const ManageRecipeMenu = ({ recipeId, recipe }: ManageRecipeMenuParams) => {
 
 interface EditComponentParams {
     recipeId?: string;
-    data: RecipeTextResponse | null;
+    data?: RecipeTextResponse;
     loading: boolean;
 }
 
@@ -160,17 +160,17 @@ const EditComponent = ({ recipeId, data, loading }: EditComponentParams) => {
 
 export const CreateRecipe = () => {
     return (
-        <EditComponent data={null} loading={false} />
+        <EditComponent loading={false} />
     )
 }
 
 export const EditRecipe = () => {
     const { recipeId } = useParams();
-    const { data, loading } = useAuthFetch<RecipeTextResponse>(
+    const { data, isPending } = useAuthFetch<RecipeTextResponse>(
         `/api/recipe/edit/${recipeId}`
     );
 
     return (
-        <EditComponent recipeId={recipeId} data={data} loading={loading} />
+        <EditComponent recipeId={recipeId} data={data} loading={isPending} />
     )
 }
