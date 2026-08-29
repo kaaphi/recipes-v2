@@ -5,7 +5,7 @@ import { useUserRecipes, type User } from "./Recipes";
 import { useCallback, useRef, useState } from "react";
 import type { OutletContextType } from "./App";
 import { useRecentRecipes } from "./RecentRecipes";
-import { expireAccessToken } from "./DevOnlyUtilities";
+import { expireAccessToken, invalidateRefreshToken } from "./DevOnlyUtilities";
 import { useAuth } from "./auth/AuthHooks";
 
 const NAV_ICON_SIZE = 24
@@ -186,8 +186,11 @@ const RecentRecipes = ({closeNavBar}: RecentRecipesParams) => {
 const DevActions = () => {
     return <NavItem label="Development Options" href="#required-for-focus" leftSection={<BugIcon size={NAV_ICON_SIZE} />}>
         <NavItem label="Expire access token" onClick={() => {
-                        expireAccessToken()
-                    }} />
+            expireAccessToken()
+        }} />
+        <NavItem label="Invalidate refresh token" onClick={() => {
+            invalidateRefreshToken()
+        }} />
     </NavItem>
 
 }
