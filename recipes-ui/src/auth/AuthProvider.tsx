@@ -27,11 +27,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logout = () => {
         setUser(null);
         const logoutUri = `${window.location.origin}/`;
-        window.location.href = `/api/logout?logout_redirect_uri=${encodeURIComponent(logoutUri)}`
+        window.location.href = `/auth/logout?logout_redirect_uri=${encodeURIComponent(logoutUri)}`
     };
 
     const login = () => {
-        window.location.href = "/api/login"
+        window.location.href = "/auth/login"
     }
 
     useEffect(() => {

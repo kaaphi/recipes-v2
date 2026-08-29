@@ -19,7 +19,7 @@ client_id = "MyClientId"
 client_secret = "MyClientSecret"
 authority = "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_MyUserPoolId1234"
 domain = "https://my-custom-domain.auth.us-west-2.amazoncognito.com"
-redirect_uri = "http://localhost:5173/api/oidc_callback"
+redirect_uri = "http://localhost:5173/auth/oidc_callback"
 ```
 
 ## DynamoDB Local
@@ -87,5 +87,5 @@ client_secret = "MyClientSecret"
 authority = "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_MyUserPoolId1234"
 domain = "my-custom-domain.auth.us-west-2.amazoncognito.com"
 #this needs to point to your actual production domain
-redirect_uri = "http://my.production.domain/api/oidc_callback"
+redirect_uri = "http://my.production.domain/auth/oidc_callback"
 ```

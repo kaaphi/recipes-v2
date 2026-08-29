@@ -142,7 +142,7 @@ class BffAuth:
         Create a cognito-compliant redirect for logout. We can't use the authlib logout_redirect() because cognito
         is not fully OIDC compliant and needs different params for logout.
         :param logout_redirect_uri: the redirect URI for logout
-        :return: a RedirectResponse to the coginto logout URI
+        :return: a RedirectResponse to the cognito logout URI
         """
         metadata = await self.cognito.load_server_metadata()
         end_session_endpoint = metadata.get("end_session_endpoint")
@@ -222,13 +222,11 @@ class BffAuth:
         encoded_credentials = base64.b64encode(raw_credentials.encode("utf-8")).decode(
             "utf-8"
         )
-
-        # 2. Inject the Authorization header manually
         headers = {"Authorization": f"Basic {encoded_credentials}"}
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.config.domain}/oauth2/token", data=payload, headers=headers
+                f"https://{self.config.domain}/oauth2/token", data=payload, headers=headers
             )
 
         if response.status_code != 200:
@@ -242,9 +240,6 @@ class BffAuth:
         return response.json()
 
     async def _middleware_dispatch(self, request: Request, call_next):
-        if request.url.path in ["/login", "/logout", "/oidc_callback"]:
-            return await call_next(request)
-
         has_bearer = request.headers.get("Authorization") is not None
         session_id = request.cookies.get(USER_SESSION_COOKIE)
 

@@ -37,10 +37,16 @@ bff_auth: BffAuth = BffAuth(
     config=config.cognito_auth, session_cache_dir=config.session_cache_dir
 )
 
-# app: FastAPI = FastAPI(dependencies=[Depends(cognito.auth_required)])
-app: FastAPI = FastAPI()
-app.add_middleware(BffMiddleware, bff_auth=bff_auth)
-app.add_middleware(SessionMiddleware, secret_key=config.cognito_auth.client_secret)
+app = FastAPI()
+
+auth_app = FastAPI()
+auth_app.add_middleware(SessionMiddleware, secret_key=config.cognito_auth.client_secret)
+
+api_app = FastAPI(dependencies=[Depends(cognito.auth_required)])
+api_app.add_middleware(BffMiddleware, bff_auth=bff_auth)
+
+app.mount("/auth", auth_app)
+app.mount("/api", api_app)
 
 
 class PlainTextRecipeResponse(Response):
@@ -62,12 +68,12 @@ def scoped_recipe_service(
     )
 
 
-@app.get("/login")
+@auth_app.get("/login")
 async def login(request: Request):
     return await bff_auth.login(request)
 
 
-@app.get("/logout")
+@auth_app.get("/logout")
 async def login(
     request: Request,
     logout_redirect_uri: str | None = None,
@@ -78,33 +84,33 @@ async def login(
     )
 
 
-@app.get("/oidc_callback")
+@auth_app.get("/oidc_callback")
 async def auth_callback(request: Request, response: Response):
     return await bff_auth.auth_callback(request, response)
 
 
-@app.get("/authorizedUser")
+@api_app.get("/authorizedUser")
 async def authorized_user(
     auth: CognitoToken = Depends(cognito.auth_required),
 ) -> AuthorizedUser:
     return AuthorizedUser(id=auth.cognito_id, username=auth.username)
 
 
-@app.get("/user/recipes")
+@api_app.get("/user/recipes")
 def get_recipes(
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
 ) -> UserRecipes:
     return scoped_service.query_user()
 
 
-@app.get("/user/archive")
+@api_app.get("/user/archive")
 def get_archive_recipes(
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
 ) -> UserRecipes:
     return scoped_service.query_archive()
 
 
-@app.get("/shared/{user_id}/recipes")
+@api_app.get("/shared/{user_id}/recipes")
 def get_shared_recipes(
     user_id: str,
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
@@ -112,7 +118,7 @@ def get_shared_recipes(
     return scoped_service.query_shared_user(user_id)
 
 
-@app.get("/user/recipes/search")
+@api_app.get("/user/recipes/search")
 def search_recipes(
     q: str,
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
@@ -122,14 +128,14 @@ def search_recipes(
     return scoped_service.search_recipes(q)
 
 
-@app.get("/recipe/{recipe_id}")
+@api_app.get("/recipe/{recipe_id}")
 def get_recipe(
     recipe_id: str, scoped_service: ScopedRecipeService = Depends(scoped_recipe_service)
 ) -> Recipe:
     return scoped_service.read_recipe(recipe_id)
 
 
-@app.put("/recipe/{recipe_id}")
+@api_app.put("/recipe/{recipe_id}")
 def put_recipe(
     recipe_id: str,
     recipe_update: RecipeUpdate,
@@ -138,7 +144,7 @@ def put_recipe(
     scoped_service.update_recipe(recipe_id, recipe_update)
 
 
-@app.get("/recipe/edit/{recipe_id}")
+@api_app.get("/recipe/edit/{recipe_id}")
 def get_edit_recipe(
     recipe_id: str, scoped_service: ScopedRecipeService = Depends(scoped_recipe_service)
 ) -> TitledPlainTextWrapper:
@@ -148,7 +154,7 @@ def get_edit_recipe(
     )
 
 
-@app.post("/recipe/edit")
+@api_app.post("/recipe/edit")
 def post_edit_recipe(
     recipe_text: PlainTextWrapper,
     scoped_service: ScopedRecipeService = Depends(scoped_recipe_service),
@@ -157,7 +163,7 @@ def post_edit_recipe(
     return scoped_service.create_recipe(plain_text_recipe)
 
 
-@app.put("/recipe/edit/{recipe_id}")
+@api_app.put("/recipe/edit/{recipe_id}")
 def put_edit_recipe(
     recipe_id: str,
     recipe_text: PlainTextWrapper,
@@ -167,7 +173,7 @@ def put_edit_recipe(
     scoped_service.edit_recipe(recipe_id, plain_text_recipe)
 
 
-@app.delete("/recipe/{recipe_id}")
+@api_app.delete("/recipe/{recipe_id}")
 def delete_recipe(
     recipe_id: str,
     is_archived: bool = False,
