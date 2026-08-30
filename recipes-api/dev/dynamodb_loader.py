@@ -49,7 +49,7 @@ class DynamoDBLoader:
 
     def create_table(self):
         if self.config != DYNAMO_DB_LOCAL_CONFIG:
-            raise Exception("Cannot create table if config is not DynamoDB local!")
+            raise ValueError("Cannot create table if config is not DynamoDB local!")
 
         if self.table_exists():
             logger.info(f"Table {self.table_name} already exists.")
@@ -105,7 +105,7 @@ class DynamoDBLoader:
             confirm = input(
                 f"You will be writing to table {db.table_name}, type YES to confirm: "
             )
-            if not confirm == "YES":
+            if confirm != "YES":
                 logger.warning("Canceled writing to table.")
                 return None
         else:
@@ -126,7 +126,7 @@ def main():
     db = DynamoDBLoader.from_args(args)
 
     if not db.table_exists():
-        raise Exception(f"Table {db.table_name} does not exist!")
+        raise ValueError(f"Table {db.table_name} does not exist!")
 
     service = RecipeService(table=db.table)
 

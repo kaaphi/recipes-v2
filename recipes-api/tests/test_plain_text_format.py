@@ -145,5 +145,5 @@ invalid_test_data = [
 
 @pytest.mark.parametrize("text", invalid_test_data)
 def test_plain_text_format_invalid(text: str) -> None:
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         from_plain_text(text=text)

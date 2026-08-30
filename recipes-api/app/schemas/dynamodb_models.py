@@ -1,10 +1,11 @@
+from collections.abc import Set as AbstractSet
 from datetime import datetime
 from typing import Annotated
 
 from pydantic import BaseModel, Discriminator, Tag, computed_field, field_validator
 
 
-def dynamodb_dump_args(additional_exclude: set[str] = set()) -> dict:
+def dynamodb_dump_args(additional_exclude: AbstractSet[str] = frozenset()) -> dict:
     return {
         "mode": "json",
         "exclude": {"is_archived", "user_id"} | additional_exclude,
@@ -34,7 +35,9 @@ class BaseRecipes(BaseModel):
     def dump_key(self):
         return self.model_dump(include=BaseRecipes.model_fields.keys())
 
-    def dump_for_dynamodb(self, additional_exclude: set[str] = set()) -> dict:
+    def dump_for_dynamodb(
+        self, additional_exclude: AbstractSet[str] = frozenset()
+    ) -> dict:
         return self.model_dump(**dynamodb_dump_args(additional_exclude))
 
 
@@ -69,7 +72,7 @@ class EditableRecipe(BaseRecipes):
         if "#" not in sk:
             return f"r#{sk}"
 
-        if not (sk.startswith("r#") or sk.startswith("zr#")):
+        if not sk.startswith(("r#", "zr#")):
             raise ValueError('Recipe sk must start with "r#" or "zr#"!')
         return sk
 
@@ -113,10 +116,10 @@ def dynamo_db_item_discriminator(v):
     match sk:
         case "#m":
             return "User"
-        case str() if sk.startswith("r#") or sk.startswith("zr#"):
+        case str() if sk.startswith(("r#", "zr#")):
             return "Recipe"
         case _:
-            raise Exception(f"Invalid sk: {sk}")
+            raise ValueError(f"Invalid sk: {sk}")
 
 
 DynamoDbItem = Annotated[
