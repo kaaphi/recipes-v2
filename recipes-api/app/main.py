@@ -80,7 +80,7 @@ async def login(request: Request):
 
 
 @auth_app.get("/logout")
-async def login(
+async def logout(
     request: Request,
     logout_redirect_uri: str | None = None,
     logout_cognito: bool = True,

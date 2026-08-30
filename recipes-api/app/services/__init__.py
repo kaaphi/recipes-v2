@@ -43,7 +43,7 @@ class RecipeService:
             )
             self.table = dynamodb_resource.Table(config.table_name)
         else:
-            raise Exception(
+            raise ValueError(
                 "Recipe service requires either a dynamodb table or a config"
             )
         self._user_lock = threading.RLock()
@@ -231,7 +231,7 @@ class ScopedRecipeService:
         recipe_service: RecipeService,
         user_id: str,
         on_scope_error: Callable[[str], Exception],
-        on_not_found: Callable[[str | None], Exception | None] = None,
+        on_not_found: Callable[[str | None], Exception | None] | None = None,
     ) -> None:
         self._service = recipe_service
         self.user_id = user_id
@@ -250,7 +250,7 @@ class ScopedRecipeService:
             recipe = self._service.read_recipe(recipe_id)
 
         if recipe is None:
-            raise Exception("Recipe not found!")
+            raise ValueError("Recipe not found!")
 
         if scope_err_msg is None:
             scope_err_msg = recipe.recipe_id

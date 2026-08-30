@@ -6,10 +6,12 @@ from collections.abc import Callable
 from urllib.parse import urlencode
 
 import httpx
+from authlib.integrations.base_client import OAuthError
 from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from diskcache import Cache
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, ValidationError
+from starlette.authentication import AuthenticationError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, RedirectResponse
 
@@ -166,7 +168,7 @@ class BffAuth:
         try:
             # Authlib exchanges the authorization code for the tokens
             token_response = await self.cognito.authorize_access_token(request)
-        except Exception as e:
+        except OAuthError as e:
             logger.warning("Cognito authorization failed: %s", e)
             raise HTTPException(status_code=400, detail="Authentication failed")
 
@@ -243,7 +245,7 @@ class BffAuth:
             logger.error(
                 f"Server error refreshing access token: {response.status_code} {response.text}"
             )
-            raise Exception(
+            raise AuthenticationError(
                 f"Could not refresh session token with provider: {response.text}",
             )
 

@@ -84,9 +84,9 @@ def main():
                 logger.info(
                     f"Updated {idx + 1}/{len(items)} items. Skipped {fixer.skipped_updated_at} for updated_at."
                 )
-        except Exception as e:
+        except Exception:
             logger.error(f"Failed to fix item {idx + 1}: {item}")
-            raise e
+            raise
 
     logger.info(
         f"Finished updating {len(items)} items in DynamoDB. Skipped {fixer.skipped_updated_at} for updated_at."

@@ -68,9 +68,9 @@ def convert_legacy_recipe(
             updated_at=legacy.updatedtime,
             created_at=legacy.createdtime,
         )
-    except ValidationError as e:
+    except ValidationError:
         logger.error(f"Cannot convert legacy recipe: {legacy}")
-        raise e
+        raise
 
 
 def load_legacy_from_postgres() -> list[LegacyRecipeContainer]:
@@ -135,8 +135,7 @@ def main():
         convert_legacy_recipe(r, config.users) for r in containers
     ]
 
-    for u in config.users.values():
-        recipes.append(u)
+    recipes.extend(config.users.values())
 
     logger.info(f"Writing v2 data to {config.output_data_file}")
     v2_adapter = TypeAdapter(list[BaseRecipes])

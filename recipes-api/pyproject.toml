@@ -32,3 +32,15 @@ fix_bad_dates = "dev.fix_bad_dates:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.ruff.lint]
+ignore = ["SIM118"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Allow FastAPI dependency injection calls in default arguments
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.params.Depends",
+    "fastapi.Query",
+    "fastapi.params.Query"
+]

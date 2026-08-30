@@ -41,30 +41,33 @@ class PlainTextParser:
             yield out
 
     def parse(self) -> PlainTextRecipe:
-        title = next(self._lines(skip_empty_lines=True))
+        try:
+            title = next(self._lines(skip_empty_lines=True))
 
-        if not title:
-            raise Exception("Missing title!")
+            if not title:
+                raise ValueError("Missing title!")
 
-        ingredient_lists = list(self._parse_ingredients())
+            ingredient_lists = list(self._parse_ingredients())
 
-        method = "\n".join(
-            self._lines(skip_empty_lines=True, until=line_equals(SOURCES_TAG))
-        ).rstrip()
+            method = "\n".join(
+                self._lines(skip_empty_lines=True, until=line_equals(SOURCES_TAG))
+            ).rstrip()
 
-        if self._peek_next(skip_empty_lines=True) == SOURCES_TAG:
-            # skip the SOURCES line
-            next(self._lines())
-            sources = list(self._lines())
-        else:
-            sources = []
+            if self._peek_next(skip_empty_lines=True) == SOURCES_TAG:
+                # skip the SOURCES line
+                next(self._lines())
+                sources = list(self._lines())
+            else:
+                sources = []
 
-        return PlainTextRecipe(
-            title=title,
-            method=method,
-            sources=sources,
-            ingredientLists=ingredient_lists,
-        )
+            return PlainTextRecipe(
+                title=title,
+                method=method,
+                sources=sources,
+                ingredientLists=ingredient_lists,
+            )
+        except StopIteration:
+            raise ValueError("Expected more data!")
 
     def _parse_ingredients(self) -> Generator[IngredientList]:
         is_default = True
@@ -94,14 +97,12 @@ def to_plain_text(recipe: PlainTextRecipe | Recipe) -> str:
         out.append("")
         if ingredient_list.name:
             out.append(f"{ingredient_list.name}:")
-        for ingredient in ingredient_list.ingredients:
-            out.append(ingredient)
+        out.extend(ingredient_list.ingredients)
     out.append("")
     out.append(recipe.method)
     if recipe.sources:
         out.append("")
         out.append(SOURCES_TAG)
-        for source in recipe.sources:
-            out.append(source)
+        out.extend(recipe.sources)
 
     return "\n".join(out)
