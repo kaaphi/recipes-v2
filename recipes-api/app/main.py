@@ -19,7 +19,7 @@ from app.schemas.dynamodb_models import Recipe
 from app.schemas.plain_text_format import from_plain_text, to_plain_text
 from app.services import RecipeService, ScopedRecipeService
 from app.services.auth import BffAuth, BffMiddleware
-from dev_routes import conditionally_add_dev_routes
+from app.dev_routes import conditionally_add_dev_routes
 
 LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
 
