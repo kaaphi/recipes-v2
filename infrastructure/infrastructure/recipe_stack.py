@@ -147,20 +147,6 @@ class RecipeStack(Stack):
             password_policy=password_policy,
         )
 
-        # TODO remove this once we move the UI to use session cookies instead of tokens directly
-        user_pool_client = user_pool.add_client(
-            "RecipeUiClient",
-            o_auth=cognito.OAuthSettings(
-                flows=cognito.OAuthFlows(
-                    authorization_code_grant=True,
-                ),
-                scopes=[cognito.OAuthScope.OPENID],
-                callback_urls=callback_urls,
-                logout_urls=logout_urls,
-            ),
-            auth_flows=cognito.AuthFlow(user=True, user_srp=True),
-        )
-
         bff_client = user_pool.add_client(
             "BffRecipeClient",
             generate_secret=True,  # Mandates a secret
@@ -201,7 +187,6 @@ class RecipeStack(Stack):
         oauth_details = {
             "user_pool_id": user_pool.user_pool_id,
             "authority": user_pool.user_pool_provider_url,
-            "spa_client_id": user_pool_client.user_pool_client_id,
             "bff_client_id": bff_client.user_pool_client_id,
             "bff_client_secret_param": client_secret_param_name,
             "domain": f"{domain_prefix}.auth.{self.region}.amazoncognito.com",
