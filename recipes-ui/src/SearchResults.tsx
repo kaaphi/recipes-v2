@@ -52,7 +52,7 @@ export const SearchResults = () => {
     const rawQuery = searchParams.get("q")
     const query = rawQuery ? rawQuery : ""
     const navigate = useNavigate();
-    const { data, loading } = useSearchRecipes(query)
+    const { data, isPending } = useSearchRecipes(query)
 
     const shouldRedirectToRecipe = data && data.length == 1 && data[0].match_type === "title"
 
@@ -67,7 +67,7 @@ export const SearchResults = () => {
     } else {
         return (
             <>
-                <LoadingOverlay visible={loading} />
+                <LoadingOverlay visible={isPending} />
                 <Title order={3}>&ldquo;{query}&rdquo;</Title>
 
                 <Table highlightOnHover verticalSpacing="sm">

@@ -78,7 +78,7 @@ export const handleDates = <T extends Record<string, unknown>>(obj: T, ...dateAt
     return rv as T
 }
 
-export const useSearchRecipes = (query: string): UseQueryResult<UserRecipes> => {
+export const useSearchRecipes = (query: string): UseQueryResult<RecipeSearchResult[]> => {
     const params = new URLSearchParams({
         q: query
     });
