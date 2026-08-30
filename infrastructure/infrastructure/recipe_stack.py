@@ -13,6 +13,7 @@ from aws_cdk import (
     Duration,
     custom_resources as cr,
     aws_logs as logs,
+    aws_ssm as ssm,
 )
 from aws_cdk.aws_cognito import UserPoolClient
 from constructs import Construct
@@ -26,15 +27,20 @@ class RecipeStack(Stack):
     def __init__(self, scope: Construct, config: Config, **kwargs) -> None:
         super().__init__(scope, STACK_ID, **kwargs)
         self.config = config
-        self.setup_cognito()
+        client_secret_param_name = self.setup_cognito()
         table = self.setup_dynamodb()
-        self.setup_user(table)
+        self.setup_user(table, client_secret_param_name)
 
         CfnOutput(self, "ProfileConfigJson", value=config.model_dump_json())
 
-    def setup_user(self, table: dynamodb.Table):
+    def setup_user(self, table: dynamodb.Table, client_secret_param_name: str):
         policy = iam.Policy(self, "RecipeAccessPolicy")
         table.grant_read_write_data(policy)
+
+        secure_param = ssm.StringParameter.from_secure_string_parameter_attributes(
+            self, "ImportedSecureParam", parameter_name=client_secret_param_name
+        )
+        secure_param.grant_read(policy)
 
         user = iam.User(self, "RecipeAccessUser")
         policy.attach_to_user(user)
@@ -108,7 +114,7 @@ class RecipeStack(Stack):
 
         return table
 
-    def setup_cognito(self):
+    def setup_cognito(self) -> str:
         callback_urls = []
         logout_urls = []
 
@@ -193,6 +199,8 @@ class RecipeStack(Stack):
         }
 
         CfnOutput(self, "OAuthDetails", value=json.dumps(oauth_details))
+
+        return client_secret_param_name
 
     def store_client_secret(self, bff_client: UserPoolClient) -> str:
         parameter_name = f"/{self.stack_name}/bff/client_secret"
