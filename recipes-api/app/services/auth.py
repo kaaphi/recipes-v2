@@ -204,7 +204,7 @@ class BffAuth:
             httponly=True,
             secure=True,  # Ensure your local SPA/BFF uses HTTPS or localhost
             samesite="lax",  # Helps protect against CSRF attacks
-            max_age=SESSION_COOKIE_MAX_AGE,
+            max_age=int(SESSION_COOKIE_MAX_AGE),
         )
 
         return response
@@ -292,6 +292,8 @@ class BffAuth:
                     )
                     update_session_cookie = True
                 elif session_data.needs_refresh():
+                    logger.info("Refreshing session %s", session_id)
+                    session_data.session_expires_at = time.time() + SESSION_COOKIE_MAX_AGE
                     update_session_cookie = True
 
             except HTTPException as e:
@@ -314,7 +316,7 @@ class BffAuth:
                     httponly=True,
                     secure=True,
                     samesite="lax",
-                    max_age=session_data.session_expires_at - time.time(),
+                    max_age=int(session_data.session_expires_at - time.time()),
                 )
 
             authorization_header = f"Bearer {session_data.access_token}"
