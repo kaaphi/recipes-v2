@@ -1,4 +1,4 @@
-import { Anchor, Button, Group, LoadingOverlay, Stack, Table, Title } from "@mantine/core";
+import { Anchor, Button, LoadingOverlay, SimpleGrid, Stack, Table, Title } from "@mantine/core";
 import { Link, useParams } from "react-router";
 import { useUserRecipes, type RecipeStub, type UserRecipes } from "./Recipes";
 import { scrollToElement } from "./UtilityHooks";
@@ -25,9 +25,9 @@ export const AllRecipes = (props: {recipes: UseQueryResult<UserRecipes>}) => {
             <Stack>
             <Title id="title_top" order={1}>{data?.is_archive ? "Archived recipes" : "Recipes"} for {data?.user.display_name}</Title>
             <div>
-            <Group>
+            <SimpleGrid minColWidth={42}>
                 {Object.keys(grouped).map((letter) => <Button onClick={() => scrollToLetter(letter)} key={letter} variant="outline" size="xs">{letter}</Button>)}
-            </Group>
+            </SimpleGrid>
             </div>
             <Stack>
             {Object.entries(grouped).map(([key, recipes]) =>
